@@ -525,13 +525,13 @@ export function SettingsView() {
               </CardHeader>
               <CardContent className="p-0 space-y-4">
                 <div className="rounded-lg border p-4 flex items-start gap-3">
-                  <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 p-2 shrink-0">
+                  <div className="rounded-md bg-emerald-50 p-2 shrink-0">
                     <Sparkles className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-medium text-sm">DeepSeek Chat API</p>
-                      <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                      <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
                         api.deepseek.com
                       </Badge>
                     </div>
@@ -591,9 +591,9 @@ export function SettingsView() {
         {/* ─── Tab 4: Danger Zone ─── */}
         <TabsContent value="danger">
           <motion.div {...fadeUp} className="space-y-4">
-            <Card className="p-6 border-rose-300 dark:border-rose-800">
+            <Card className="p-6 border-rose-300">
               <CardHeader className="p-0 pb-6">
-                <CardTitle className="flex items-center gap-2 text-base text-rose-700 dark:text-rose-400">
+                <CardTitle className="flex items-center gap-2 text-base text-rose-700">
                   <AlertTriangle className="h-4 w-4" />
                   Danger Zone
                 </CardTitle>
@@ -602,7 +602,7 @@ export function SettingsView() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0 space-y-4">
-                <div className="rounded-lg border border-rose-200 dark:border-rose-900/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="rounded-lg border border-rose-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-sm">Reset All Data</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -641,7 +641,7 @@ export function SettingsView() {
                   </AlertDialog>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="rounded-lg border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-sm">Clear All Queued Emails</p>
                     <p className="text-xs text-muted-foreground mt-1">

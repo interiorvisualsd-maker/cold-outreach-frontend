@@ -142,35 +142,35 @@ interface AnalyticsResponse {
 export function statusBadgeClass(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
     case 'paused':
-      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-700 border-slate-200'
     case 'suspended':
     case 'error':
-      return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+      return 'bg-rose-100 text-rose-700 border-rose-200'
     case 'draft':
-      return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+      return 'bg-amber-100 text-amber-700 border-amber-200'
     case 'completed':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
     default:
-      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-700 border-slate-200'
   }
 }
 
 export function warmupBadgeClass(state: string): string {
   switch (state) {
     case 'cold':
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
     case 'heating':
-      return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+      return 'bg-amber-100 text-amber-700 border-amber-200'
     case 'warm':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
     case 'paused':
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
     case 'suspended':
-      return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+      return 'bg-rose-100 text-rose-700 border-rose-200'
     default:
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
   }
 }
 
@@ -223,15 +223,15 @@ function sentimentBadgeClass(s: string | null | undefined): string | null {
   if (!s) return null
   switch (s) {
     case 'interested':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
     case 'not_interested':
     case 'unsubscribe':
-      return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+      return 'bg-rose-100 text-rose-700 border-rose-200'
     case 'ooo':
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
     case 'neutral':
     default:
-      return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+      return 'bg-amber-100 text-amber-700 border-amber-200'
   }
 }
 
@@ -568,10 +568,10 @@ export function DashboardView({ onNavigate }: { onNavigate?: (view: 'accounts' |
                 variant="outline"
                 className={
                   score >= 80
-                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                     : score >= 60
-                      ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
-                      : 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+                      ? 'bg-amber-100 text-amber-700 border-amber-200'
+                      : 'bg-rose-100 text-rose-700 border-rose-200'
                 }
               >
                 {score >= 80 ? 'Healthy' : score >= 60 ? 'At Risk' : 'Critical'}
@@ -623,10 +623,10 @@ export function DashboardView({ onNavigate }: { onNavigate?: (view: 'accounts' |
                       : 'text-amber-600'
                 const toneBg =
                   m.tone === 'emerald'
-                    ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                    ? 'bg-emerald-50'
                     : m.tone === 'rose'
-                      ? 'bg-rose-50 dark:bg-rose-900/20'
-                      : 'bg-amber-50 dark:bg-amber-900/20'
+                      ? 'bg-rose-50'
+                      : 'bg-amber-50'
                 return (
                   <div
                     key={m.label}

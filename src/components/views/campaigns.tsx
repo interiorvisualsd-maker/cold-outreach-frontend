@@ -168,19 +168,19 @@ const LEAD_STATUSES = ['pending', 'step1_sent', 'step2_sent', 'step3_sent', 'rep
 function leadStatusBadgeClass(status: string): string {
   switch (status) {
     case 'pending':
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
     case 'step1_sent':
     case 'step2_sent':
     case 'step3_sent':
-      return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+      return 'bg-amber-100 text-amber-700 border-amber-200'
     case 'replied':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
     case 'suppressed':
     case 'bounced':
     case 'unsubscribed':
-      return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+      return 'bg-rose-100 text-rose-700 border-rose-200'
     default:
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
   }
 }
 
@@ -199,46 +199,46 @@ function rateTone(rate: number, good: number, ok: number, higherIsBetter = true)
 
 const toneClasses: Record<'emerald' | 'amber' | 'rose', { text: string; bg: string; ring: string }> = {
   emerald: {
-    text: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    ring: 'ring-emerald-200 dark:ring-emerald-800',
+    text: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    ring: 'ring-emerald-200',
   },
   amber: {
-    text: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    ring: 'ring-amber-200 dark:ring-amber-800',
+    text: 'text-amber-600',
+    bg: 'bg-amber-50',
+    ring: 'ring-amber-200',
   },
   rose: {
-    text: 'text-rose-600 dark:text-rose-400',
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    ring: 'ring-rose-200 dark:ring-rose-800',
+    text: 'text-rose-600',
+    bg: 'bg-rose-50',
+    ring: 'ring-rose-200',
   },
 }
 
 const sentimentMeta: Record<string, { label: string; className: string }> = {
   interested: {
     label: 'Interested',
-    className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800',
+    className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   },
   not_interested: {
     label: 'Not Interested',
-    className: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+    className: 'bg-rose-100 text-rose-700 border-rose-200',
   },
   neutral: {
     label: 'Neutral',
-    className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
+    className: 'bg-amber-100 text-amber-700 border-amber-200',
   },
   ooo: {
     label: 'Out of Office',
-    className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+    className: 'bg-slate-100 text-slate-700 border-slate-200',
   },
   unsubscribe: {
     label: 'Unsubscribe',
-    className: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+    className: 'bg-rose-100 text-rose-700 border-rose-200',
   },
   untagged: {
     label: 'Untagged',
-    className: 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
+    className: 'bg-slate-100 text-slate-500 border-slate-200',
   },
 }
 
@@ -1114,11 +1114,11 @@ export function CampaignsView() {
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-base">Step {num}</CardTitle>
                           {step ? (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800">
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                               {num === 1 ? 'Day 0' : `Day ${step.delayDays}`}
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+                            <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200">
                               Empty
                             </Badge>
                           )}
@@ -1299,7 +1299,7 @@ export function CampaignsView() {
                         size="sm"
                         variant="outline"
                         onClick={() => setBulkAction('suppress')}
-                        className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-800 dark:hover:bg-rose-900/20"
+                        className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                       >
                         <Shield className="h-3.5 w-3.5" />
                         Suppress
@@ -1308,7 +1308,7 @@ export function CampaignsView() {
                         size="sm"
                         variant="outline"
                         onClick={() => setBulkAction('cancel')}
-                        className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-800 dark:hover:bg-amber-900/20"
+                        className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                       >
                         <XCircle className="h-3.5 w-3.5" />
                         Cancel Queue
@@ -1317,7 +1317,7 @@ export function CampaignsView() {
                         size="sm"
                         variant="outline"
                         onClick={() => setBulkAction('requeue')}
-                        className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:hover:bg-emerald-900/20"
+                        className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                       >
                         <RotateCcw className="h-3.5 w-3.5" />
                         Re-queue Step 1
@@ -1326,7 +1326,7 @@ export function CampaignsView() {
                         size="sm"
                         variant="outline"
                         onClick={() => setBulkAction('delete')}
-                        className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-800 dark:hover:bg-rose-900/20"
+                        className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         Delete

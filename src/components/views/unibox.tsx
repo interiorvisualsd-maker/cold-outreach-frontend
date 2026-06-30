@@ -165,16 +165,16 @@ function sentimentBadgeClass(sentiment: string | null): string | null {
   if (!sentiment) return null
   switch (sentiment) {
     case 'interested':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
     case 'not_interested':
-      return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+      return 'bg-rose-100 text-rose-700 border-rose-200'
     case 'ooo':
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
     case 'unsubscribe':
-      return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
+      return 'bg-rose-100 text-rose-700 border-rose-200'
     case 'neutral':
     default:
-      return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+      return 'bg-amber-100 text-amber-700 border-amber-200'
   }
 }
 
@@ -640,8 +640,8 @@ export function UniboxView() {
                           <div
                             className={`max-w-[85%] rounded-lg p-3 text-sm ${
                               msg.type === 'outbound'
-                                ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
-                                : 'bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
+                                ? 'bg-emerald-50 border border-emerald-200'
+                                : 'bg-amber-50 border border-amber-200'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 mb-1">

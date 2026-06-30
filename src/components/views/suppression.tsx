@@ -95,25 +95,25 @@ const reasonMeta: Record<string, { label: string; className: string; icon: typeo
   bounce: {
     label: 'Bounce',
     className:
-      'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+      'bg-rose-100 text-rose-700 border-rose-200',
     icon: Ban,
   },
   unsubscribe: {
     label: 'Unsubscribe',
     className:
-      'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
+      'bg-amber-100 text-amber-700 border-amber-200',
     icon: MailX,
   },
   complaint: {
     label: 'Complaint',
     className:
-      'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+      'bg-rose-100 text-rose-700 border-rose-200',
     icon: ShieldAlert,
   },
   manual: {
     label: 'Manual',
     className:
-      'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+      'bg-slate-100 text-slate-700 border-slate-200',
     icon: ShieldOff,
   },
 }
@@ -252,28 +252,28 @@ export function SuppressionView() {
       value: total,
       icon: ShieldOff,
       tone: 'text-slate-600',
-      bg: 'bg-slate-100 dark:bg-slate-800/50',
+      bg: 'bg-slate-100',
     },
     {
       label: 'Bounces',
       value: countFor('bounce'),
       icon: Ban,
       tone: 'text-rose-600',
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      bg: 'bg-rose-50',
     },
     {
       label: 'Unsubscribes',
       value: countFor('unsubscribe'),
       icon: MailX,
       tone: 'text-amber-600',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      bg: 'bg-amber-50',
     },
     {
       label: 'Complaints',
       value: countFor('complaint'),
       icon: ShieldAlert,
       tone: 'text-rose-600',
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      bg: 'bg-rose-50',
     },
   ]
 
@@ -501,7 +501,7 @@ export function SuppressionView() {
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 h-8 w-8 p-0"
+                                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0"
                                     title="Remove"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />

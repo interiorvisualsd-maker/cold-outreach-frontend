@@ -98,10 +98,10 @@ const CATEGORIES = [
 ] as const
 
 const CATEGORY_BADGE: Record<string, string> = {
-  outreach: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800',
-  followup: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
-  warmup: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-800',
-  custom: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+  outreach: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  followup: 'bg-amber-100 text-amber-700 border-amber-200',
+  warmup: 'bg-teal-100 text-teal-700 border-teal-200',
+  custom: 'bg-slate-100 text-slate-700 border-slate-200',
 }
 
 function detectMergeFields(text: string): string[] {
@@ -372,7 +372,7 @@ export function TemplatesView() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                      className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                       onClick={() => setDeleteTarget(t)}
                       title="Delete"
                     >
@@ -584,7 +584,7 @@ export function TemplatesView() {
                   </div>
                 </div>
               )}
-              <div className="rounded-md border border-slate-200 bg-slate-50 dark:bg-slate-900/40 dark:border-slate-800 p-3 text-xs text-slate-600 dark:text-slate-300">
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                 <p className="font-medium mb-1">Sample data used for preview:</p>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono">
                   {Object.entries(SAMPLE_DATA).map(([k, v]) => (

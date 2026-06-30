@@ -425,11 +425,11 @@ export function CsvUploadView() {
                     <div key={c} className="flex items-center justify-between text-sm">
                       <span className="font-mono text-xs">{c}</span>
                       {ok ? (
-                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800">
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                           <Check className="h-3 w-3" /> Mapped
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800">
+                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">
                           <X className="h-3 w-3" /> Missing
                         </Badge>
                       )}
@@ -437,7 +437,7 @@ export function CsvUploadView() {
                   )
                 })}
                 {missingRequired.length > 0 && (
-                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                  <p className="text-xs text-amber-700 mt-2">
                     Map the missing columns above to enable Import.
                   </p>
                 )}
@@ -549,10 +549,10 @@ export function CsvUploadView() {
                                 variant="outline"
                                 className={
                                   s.reason === 'duplicate'
-                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
                                     : s.reason === 'suppressed'
-                                      ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800'
-                                      : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200'
                                 }
                               >
                                 {s.reason}

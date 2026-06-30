@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,21 @@ import {
   Settings,
   Search,
   CornerDownLeft,
+  Mail,
+  Building2,
 } from 'lucide-react'
+import { api } from '@/lib/api'
 import type { ViewId } from './app-shell'
+
+interface LeadResult {
+  id: string
+  email: string
+  companyName: string | null
+  website: string | null
+  status: string
+  currentStep: number
+  campaign: { name: string } | null
+}
 
 interface CommandItem {
   id: string
@@ -40,6 +53,7 @@ interface CommandPaletteProps {
   onOpenChange: (open: boolean) => void
   onNavigate: (view: ViewId) => void
   onLogout?: () => void
+  onLeadSelect?: (leadId: string, campaignId: string) => void
 }
 
 const NAV_COMMANDS: Array<{
@@ -63,40 +77,87 @@ const NAV_COMMANDS: Array<{
   { id: 'settings', label: 'Settings', description: 'Config & integrations', icon: Settings, group: 'Settings', keywords: 'settings config integrations' },
 ]
 
-export function CommandPalette({ open, onOpenChange, onNavigate, onLogout }: CommandPaletteProps) {
+export function CommandPalette({ open, onOpenChange, onNavigate, onLogout, onLeadSelect }: CommandPaletteProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [leadResults, setLeadResults] = useState<LeadResult[]>([])
+  const [searchingLeads, setSearchingLeads] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
-  const commands: CommandItem[] = [
-    ...NAV_COMMANDS.map((c) => ({
-      id: c.id,
-      label: c.label,
-      description: c.description,
-      icon: c.icon,
-      group: c.group,
-      keywords: c.keywords,
-      action: () => {
-        onNavigate(c.id)
-        onOpenChange(false)
-      },
-    })),
-    ...(onLogout
-      ? [{
-          id: 'logout',
-          label: 'Sign Out',
-          description: 'Log out of your account',
-          icon: LogOut,
-          group: 'Actions',
-          action: () => {
-            onLogout()
-            onOpenChange(false)
-          },
-        }]
-      : []),
-  ]
+  // Debounced lead search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (query.length < 2) {
+      setLeadResults([])
+      setSearchingLeads(false)
+      return
+    }
+    setSearchingLeads(true)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await api.get<{ results: LeadResult[] }>(`/api/extras/search/leads?q=${encodeURIComponent(query)}&limit=5`)
+        setLeadResults(res.results || [])
+      } catch {
+        setLeadResults([])
+      } finally {
+        setSearchingLeads(false)
+      }
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [query])
 
-  const filtered = commands.filter((cmd) => {
-    if (!query) return true
+  const navCommands: CommandItem[] = NAV_COMMANDS.map((c) => ({
+    id: c.id,
+    label: c.label,
+    description: c.description,
+    icon: c.icon,
+    group: c.group,
+    keywords: c.keywords,
+    action: () => {
+      onNavigate(c.id)
+      onOpenChange(false)
+    },
+  }))
+
+  const leadCommands: CommandItem[] = leadResults.map((lead) => ({
+    id: `lead-${lead.id}`,
+    label: lead.email,
+    description: `${lead.companyName || 'Unknown company'} · ${lead.campaign?.name || 'No campaign'} · ${lead.status}`,
+    icon: lead.companyName ? Building2 : Mail,
+    group: 'Leads',
+    action: () => {
+      if (onLeadSelect && lead.campaign) {
+        onLeadSelect(lead.id, lead.campaignId)
+      } else {
+        // Fallback: navigate to campaigns view
+        onNavigate('campaigns')
+      }
+      onOpenChange(false)
+    },
+  }))
+
+  const actionCommands: CommandItem[] = onLogout
+    ? [{
+        id: 'logout',
+        label: 'Sign Out',
+        description: 'Log out of your account',
+        icon: LogOut,
+        group: 'Actions',
+        action: () => {
+          onLogout()
+          onOpenChange(false)
+        },
+      }]
+    : []
+
+  // When query is short, show nav + actions. When query is 2+ chars, show leads + nav (filtered).
+  const allCommands = [...leadCommands, ...navCommands, ...actionCommands]
+  const filtered = allCommands.filter((cmd) => {
+    // Lead results always show when present (they're already server-filtered)
+    if (cmd.group === 'Leads') return true
+    if (!query || query.length < 2) return true
     const q = query.toLowerCase()
     return (
       cmd.label.toLowerCase().includes(q) ||
@@ -105,12 +166,10 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout }: Com
     )
   })
 
-  // Reset selection when query changes
   useEffect(() => {
     setSelectedIndex(0)
   }, [query])
 
-  // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
@@ -136,7 +195,14 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout }: Com
     }
   }, [open, handleKeyDown])
 
-  // Group filtered commands
+  // Reset on close
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+      setLeadResults([])
+    }
+  }, [open])
+
   const grouped = filtered.reduce((acc, cmd) => {
     if (!acc[cmd.group]) acc[cmd.group] = []
     acc[cmd.group].push(cmd)
@@ -158,9 +224,12 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout }: Com
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search views, actions... (or type a command)"
+            placeholder="Search views, leads, actions... (type 2+ chars to search leads)"
             className="flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 outline-none"
           />
+          {searchingLeads && (
+            <div className="h-4 w-4 border-2 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
+          )}
           <kbd className="hidden sm:flex h-5 items-center gap-0.5 rounded border border-slate-200 bg-slate-50 px-1.5 text-[10px] font-medium text-slate-400">
             ESC
           </kbd>
@@ -171,14 +240,16 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout }: Com
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Search className="h-8 w-8 text-slate-300 mb-2" />
-              <p className="text-sm font-medium text-slate-700">No results found</p>
-              <p className="text-xs text-slate-400 mt-1">Try a different search term</p>
+              <p className="text-sm font-medium text-slate-700">{query.length < 2 ? 'Start typing to search' : 'No results found'}</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {query.length < 2 ? 'Type 2+ characters to search leads by email or company' : 'Try a different search term'}
+              </p>
             </div>
           ) : (
             Object.entries(grouped).map(([group, items]) => (
               <div key={group} className="px-2">
                 <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  {group}
+                  {group}{group === 'Leads' && leadResults.length > 0 ? ` (${leadResults.length})` : ''}
                 </p>
                 {items.map((cmd) => {
                   const isSelected = flatIndex === selectedIndex
@@ -199,7 +270,7 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout }: Com
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${isSelected ? 'text-violet-900' : 'text-slate-900'}`}>
+                        <p className={`text-sm font-medium ${isSelected ? 'text-violet-900' : 'text-slate-900'} truncate`}>
                           {cmd.label}
                         </p>
                         <p className="text-xs text-slate-500 truncate">{cmd.description}</p>

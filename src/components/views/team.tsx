@@ -70,8 +70,8 @@ const fadeUp = {
 
 function roleBadgeClass(role: string): string {
   return role === 'admin'
-    ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800'
-    : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    : 'bg-slate-100 text-slate-700 border-slate-200'
 }
 
 function initials(name: string): string {
@@ -250,7 +250,7 @@ export function TeamView() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
-                                <AvatarFallback className="text-xs bg-slate-100 dark:bg-slate-800">
+                                <AvatarFallback className="text-xs bg-slate-100">
                                   {initials(m.name)}
                                 </AvatarFallback>
                               </Avatar>
@@ -328,7 +328,7 @@ export function TeamView() {
       <motion.div {...fadeUp} transition={{ delay: 0.1 }}>
         <Card className="p-5 border-dashed">
           <CardContent className="p-0 flex flex-col sm:flex-row items-start gap-4">
-            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3 text-emerald-600 shrink-0">
+            <div className="rounded-lg bg-emerald-50 p-3 text-emerald-600 shrink-0">
               <UserPlus className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
