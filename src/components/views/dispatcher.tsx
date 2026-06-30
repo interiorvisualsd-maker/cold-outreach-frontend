@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/lib/api'
+import { downloadCsv } from '@/lib/download'
 import { useToast } from '@/hooks/use-toast'
 import {
   Card,
@@ -47,6 +48,7 @@ import {
   Clock,
   Mail,
   AlertTriangle,
+  Download,
 } from 'lucide-react'
 import { statusBadgeClass, warmupBadgeClass, EmptyState } from './dashboard'
 
@@ -134,6 +136,7 @@ export function DispatcherView() {
   const [processing, setProcessing] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [exportingQueue, setExportingQueue] = useState(false)
 
   const loadStats = useCallback(
     async (silent = false) => {
@@ -229,6 +232,23 @@ export function DispatcherView() {
     }
   }
 
+  const exportQueue = async () => {
+    setExportingQueue(true)
+    try {
+      const statusParam = queueStatus !== 'all' ? `?status=${queueStatus}` : ''
+      await downloadCsv(
+        `/api/exports/export/queue${statusParam}`,
+        `queue-${new Date().toISOString().slice(0, 10)}.csv`,
+      )
+      toast({ title: 'Queue exported', description: 'CSV download started' })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Export failed'
+      toast({ title: 'Export failed', description: msg, variant: 'destructive' })
+    } finally {
+      setExportingQueue(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -284,7 +304,11 @@ export function DispatcherView() {
           <h1 className="text-2xl font-bold tracking-tight">Dispatcher</h1>
           <p className="text-sm text-muted-foreground">Queue, sending stats & account health</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={exportQueue} disabled={exportingQueue}>
+            {exportingQueue ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export Queue
+          </Button>
           <Button variant="outline" size="sm" onClick={() => { loadStats(true); loadQueue(queuePage, queueStatus) }} disabled={refreshing}>
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
@@ -305,7 +329,7 @@ export function DispatcherView() {
         {statCards.map((c) => {
           const Icon = c.icon
           return (
-            <Card key={c.label} className="p-4">
+            <Card key={c.label} className="card-hover p-4">
               <CardContent className="p-0 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -347,7 +371,7 @@ export function DispatcherView() {
                   {stats.accounts.map((a) => {
                     const pct = a.dailyCap > 0 ? Math.min(100, Math.round((a.sentToday / a.dailyCap) * 100)) : 0
                     return (
-                      <TableRow key={a.id}>
+                      <TableRow key={a.id} className="ld-row-hover">
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">{a.label}</span>
@@ -444,7 +468,7 @@ export function DispatcherView() {
                   </TableHeader>
                   <TableBody>
                     {queue.map((q) => (
-                      <TableRow key={q.id}>
+                      <TableRow key={q.id} className="ld-row-hover">
                         <TableCell className="font-medium max-w-[200px] truncate">
                           {q.subject}
                         </TableCell>

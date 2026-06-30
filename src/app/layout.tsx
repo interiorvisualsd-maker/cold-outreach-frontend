@@ -1,37 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "Lead Dispatcher — Cold Email Automation",
+  description: "Private cold email automation with inbox rotation, warm-up engine, and unified inbox.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
-  openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    icon: "/logo.svg",
   },
 };
 
@@ -43,7 +25,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${inter.variable} antialiased bg-background text-foreground`}
+        style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
       >
         {children}
         <Toaster />

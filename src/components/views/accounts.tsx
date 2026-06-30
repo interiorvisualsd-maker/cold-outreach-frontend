@@ -415,7 +415,7 @@ export function AccountsView() {
                   {accounts.map((a) => {
                     const pct = a.dailyCap > 0 ? Math.min(100, Math.round((a.sentToday / a.dailyCap) * 100)) : 0
                     return (
-                      <TableRow key={a.id}>
+                      <TableRow key={a.id} className="ld-row-hover">
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">{a.label}</span>

@@ -12,6 +12,10 @@ import { CsvUploadView } from '@/components/views/csv-upload'
 import { DispatcherView } from '@/components/views/dispatcher'
 import { WarmupView } from '@/components/views/warmup'
 import { UniboxView } from '@/components/views/unibox'
+import { SuppressionView } from '@/components/views/suppression'
+import { SettingsView } from '@/components/views/settings'
+import { TemplatesView } from '@/components/views/templates'
+import { TeamView } from '@/components/views/team'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -35,6 +39,10 @@ function AppContent() {
       {view === 'dispatcher' && <DispatcherView />}
       {view === 'warmup' && <WarmupView />}
       {view === 'unibox' && <UniboxView />}
+      {view === 'suppression' && <SuppressionView />}
+      {view === 'settings' && <SettingsView />}
+      {view === 'templates' && <TemplatesView />}
+      {view === 'team' && <TeamView />}
     </AppShell>
   )
 }

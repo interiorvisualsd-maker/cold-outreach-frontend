@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { api } from '@/lib/api'
+import { downloadCsv } from '@/lib/download'
 import { useToast } from '@/hooks/use-toast'
 import {
   Card,
@@ -36,8 +37,50 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
+  Download,
+  Filter,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { EmptyState } from './dashboard'
+
+// ─── CopyEmailButton — small inline copy-to-clipboard for email fields ──
+function CopyEmailButton({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(email)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = email
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Silently ignore — best-effort UX feature
+    }
+  }
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+      onClick={handleCopy}
+      title={`Copy ${email}`}
+      aria-label={`Copy ${email}`}
+    >
+      {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+    </Button>
+  )
+}
 
 interface ReplyListItem {
   id: string
@@ -154,6 +197,8 @@ export function UniboxView() {
   const [replySubject, setReplySubject] = useState('')
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
+  const [sentimentFilter, setSentimentFilter] = useState<string>('all')
+  const [exportingReplies, setExportingReplies] = useState(false)
 
   const loadList = useCallback(
     async (silent = false) => {
@@ -299,6 +344,32 @@ export function UniboxView() {
     })
   }
 
+  // Client-side sentiment filter applied to the loaded page of replies
+  const filteredReplies = useMemo(() => {
+    if (sentimentFilter === 'all') return replies
+    return replies.filter((r) =>
+      sentimentFilter === 'untagged'
+        ? !r.sentiment
+        : r.sentiment === sentimentFilter,
+    )
+  }, [replies, sentimentFilter])
+
+  const exportReplies = async () => {
+    setExportingReplies(true)
+    try {
+      await downloadCsv(
+        '/api/exports/export/replies',
+        `replies-${new Date().toISOString().slice(0, 10)}.csv`,
+      )
+      toast({ title: 'Replies exported', description: 'CSV download started' })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Export failed'
+      toast({ title: 'Export failed', description: msg, variant: 'destructive' })
+    } finally {
+      setExportingReplies(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -306,7 +377,11 @@ export function UniboxView() {
           <h1 className="text-2xl font-bold tracking-tight">Unibox</h1>
           <p className="text-sm text-muted-foreground">Unified reply inbox with thread context</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={exportReplies} disabled={exportingReplies}>
+            {exportingReplies ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export Replies
+          </Button>
           <Button variant="outline" size="sm" onClick={() => loadList(true)} disabled={refreshing}>
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
@@ -320,25 +395,25 @@ export function UniboxView() {
 
       {/* Stats bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-4">
+        <Card className="card-hover p-4">
           <CardContent className="p-0">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Replies</p>
             <p className="text-2xl font-bold mt-1">{stats?.totalReplies ?? 0}</p>
           </CardContent>
         </Card>
-        <Card className="p-4">
+        <Card className="card-hover p-4">
           <CardContent className="p-0">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Unread</p>
             <p className="text-2xl font-bold mt-1 text-rose-600">{stats?.unreadReplies ?? 0}</p>
           </CardContent>
         </Card>
-        <Card className="p-4">
+        <Card className="card-hover p-4">
           <CardContent className="p-0">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Replied Today</p>
             <p className="text-2xl font-bold mt-1 text-emerald-600">{stats?.repliedToday ?? 0}</p>
           </CardContent>
         </Card>
-        <Card className="p-4">
+        <Card className="card-hover p-4">
           <CardContent className="p-0">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Suppressed</p>
             <p className="text-2xl font-bold mt-1 text-slate-600">{stats?.suppressedCount ?? 0}</p>
@@ -351,7 +426,7 @@ export function UniboxView() {
         {/* List pane */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <CardTitle className="text-base flex items-center gap-2">
                 <Inbox className="h-4 w-4" />
                 Replies ({total})
@@ -367,6 +442,31 @@ export function UniboxView() {
                 {unreadOnly ? 'Unread Only' : 'All'}
               </Button>
             </div>
+            <div className="flex items-center gap-2 mt-2">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+              <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
+                <SelectTrigger className="h-8 w-full text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sentiments</SelectItem>
+                  <SelectItem value="interested">Interested</SelectItem>
+                  <SelectItem value="not_interested">Not Interested</SelectItem>
+                  <SelectItem value="neutral">Neutral</SelectItem>
+                  <SelectItem value="ooo">Out of Office</SelectItem>
+                  <SelectItem value="unsubscribe">Unsubscribe</SelectItem>
+                  <SelectItem value="untagged">Untagged</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {sentimentFilter !== 'all' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {filteredReplies.length} matching · filtering by{' '}
+                <span className="font-medium capitalize">
+                  {sentimentFilter === 'ooo' ? 'out of office' : sentimentFilter}
+                </span>
+              </p>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
@@ -379,9 +479,20 @@ export function UniboxView() {
                 title="No replies"
                 description="When leads reply, their messages will appear here."
               />
+            ) : filteredReplies.length === 0 ? (
+              <EmptyState
+                icon={<Filter className="h-8 w-8" />}
+                title="No matches"
+                description={`No replies on this page match the selected sentiment filter.`}
+                action={
+                  <Button size="sm" variant="outline" onClick={() => setSentimentFilter('all')}>
+                    Clear filter
+                  </Button>
+                }
+              />
             ) : (
               <div className="max-h-[32rem] lg:max-h-[36rem] overflow-y-auto border-t">
-                {replies.map((r) => (
+                {filteredReplies.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => loadDetail(r.id)}

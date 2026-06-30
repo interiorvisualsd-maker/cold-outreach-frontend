@@ -15,6 +15,14 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -23,6 +31,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+} from 'recharts'
 import {
   Flame,
   Loader2,
@@ -33,6 +51,10 @@ import {
   ShieldCheck,
   AlertTriangle,
   TrendingUp,
+  History,
+  ArrowUpRight,
+  ArrowDownLeft,
+  LifeBuoy,
 } from 'lucide-react'
 import { warmupBadgeClass, EmptyState } from './dashboard'
 
@@ -60,6 +82,19 @@ interface WarmupStats {
   }
 }
 
+interface WarmupHistoryPoint {
+  date: string
+  sent: number
+  received: number
+  rescued: number
+}
+
+interface WarmupHistory {
+  account: { id: string; label: string; emailAddress: string }
+  series: WarmupHistoryPoint[]
+  summary: { totalSent: number; totalReceived: number; totalRescued: number; avgPerDay: number }
+}
+
 export function WarmupView() {
   const { toast } = useToast()
   const [stats, setStats] = useState<WarmupStats | null>(null)
@@ -68,6 +103,9 @@ export function WarmupView() {
   const [processing, setProcessing] = useState(false)
   const [checkingInbound, setCheckingInbound] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [historyAccountId, setHistoryAccountId] = useState<string | null>(null)
+  const [history, setHistory] = useState<WarmupHistory | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const load = useCallback(
     async (silent = false) => {
@@ -143,6 +181,30 @@ export function WarmupView() {
     } finally {
       setTogglingId(null)
     }
+  }
+
+  const openHistory = useCallback(
+    async (accountId: string) => {
+      setHistoryAccountId(accountId)
+      setHistory(null)
+      setHistoryLoading(true)
+      try {
+        const res = await api.get<WarmupHistory>(`/api/exports/warmup-history/${accountId}`)
+        setHistory(res)
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        toast({ title: 'Failed to load warmup history', description: msg, variant: 'destructive' })
+        setHistoryAccountId(null)
+      } finally {
+        setHistoryLoading(false)
+      }
+    },
+    [toast],
+  )
+
+  const closeHistory = () => {
+    setHistoryAccountId(null)
+    setHistory(null)
   }
 
   if (loading) {
@@ -221,7 +283,7 @@ export function WarmupView() {
         {statCards.map((c) => {
           const Icon = c.icon
           return (
-            <Card key={c.label} className="p-4">
+            <Card key={c.label} className="card-hover p-4">
               <CardContent className="p-0 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -277,10 +339,17 @@ export function WarmupView() {
                     const todayPct = todayTarget > 0 ? Math.min(100, Math.round((a.warmupSentToday / todayTarget) * 100)) : 0
                     const rampPct = Math.min(100, Math.round((a.warmupDay / Math.max(1, Math.ceil((a.warmupTargetMax - a.warmupStartQty) / a.warmupIncrement) + 1)) * 100))
                     return (
-                      <TableRow key={a.id}>
+                      <TableRow
+                        key={a.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => openHistory(a.id)}
+                      >
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium">{a.label}</span>
+                            <span className="font-medium flex items-center gap-1.5">
+                              {a.label}
+                              <History className="h-3 w-3 text-muted-foreground" />
+                            </span>
                             <span className="text-xs text-muted-foreground">{a.emailAddress}</span>
                           </div>
                         </TableCell>
@@ -290,7 +359,7 @@ export function WarmupView() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{a.warmupDay}</TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2 min-w-[200px]">
                             <Progress value={todayPct} className="flex-1" />
                             <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -309,7 +378,7 @@ export function WarmupView() {
                             <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-center">
                             <Switch
                               checked={true}
@@ -352,8 +421,164 @@ export function WarmupView() {
             <Label className="mt-0.5 min-w-[80px] text-xs font-mono">Graduated</Label>
             <p>Once an account reaches its target, it becomes <Badge variant="outline" className={warmupBadgeClass('warm')}>warm</Badge> and stays in maintenance mode.</p>
           </div>
+          <div className="flex items-start gap-3 pt-2 border-t mt-2">
+            <Label className="mt-0.5 min-w-[80px] text-xs font-mono flex items-center gap-1">
+              <History className="h-3 w-3" /> Tip
+            </Label>
+            <p>Click any account row to view its 30-day warmup history chart.</p>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Warmup history dialog */}
+      <Dialog open={historyAccountId !== null} onOpenChange={(o) => !o && closeHistory()}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Warmup History
+            </DialogTitle>
+            <DialogDescription>
+              {history?.account
+                ? `${history.account.label} — ${history.account.emailAddress}`
+                : 'Loading account…'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {historyLoading ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+              <Skeleton className="h-64 w-full" />
+            </div>
+          ) : history ? (
+            <div className="space-y-4">
+              {/* Summary stat cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  {
+                    label: 'Total Sent',
+                    value: history.summary.totalSent,
+                    icon: ArrowUpRight,
+                    tone: 'text-emerald-600',
+                    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+                  },
+                  {
+                    label: 'Received',
+                    value: history.summary.totalReceived,
+                    icon: ArrowDownLeft,
+                    tone: 'text-amber-600',
+                    bg: 'bg-amber-50 dark:bg-amber-900/20',
+                  },
+                  {
+                    label: 'Rescued',
+                    value: history.summary.totalRescued,
+                    icon: LifeBuoy,
+                    tone: 'text-rose-600',
+                    bg: 'bg-rose-50 dark:bg-rose-900/20',
+                  },
+                  {
+                    label: 'Avg / Day',
+                    value: history.summary.avgPerDay,
+                    icon: TrendingUp,
+                    tone: 'text-slate-600',
+                    bg: 'bg-slate-100 dark:bg-slate-800/50',
+                  },
+                ].map((s) => {
+                  const Icon = s.icon
+                  return (
+                    <div key={s.label} className={`rounded-lg p-3 ${s.bg}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                          {s.label}
+                        </p>
+                        <Icon className={`h-3.5 w-3.5 ${s.tone}`} />
+                      </div>
+                      <p className="text-xl font-bold">{s.value}</p>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* 30-day trend chart */}
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  30-Day Trend
+                </p>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={history.series}
+                      margin={{ top: 5, right: 12, bottom: 0, left: -20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.4)" vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 9 }}
+                        tickFormatter={(d: string) => d.slice(5)}
+                        stroke="hsl(var(--muted-foreground))"
+                        interval={4}
+                      />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'hsl(var(--popover))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                        }}
+                        labelFormatter={(d: string) => d}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
+                      <Line
+                        type="monotone"
+                        dataKey="sent"
+                        name="Sent"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="received"
+                        name="Received"
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="rescued"
+                        name="Rescued"
+                        stroke="#f43f5e"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={closeHistory}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              No history available.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
