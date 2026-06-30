@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { api } from '@/lib/api'
 import { downloadCsv } from '@/lib/download'
 import { useToast } from '@/hooks/use-toast'
+import { LeadDetailDialog } from '@/components/lead-detail-dialog'
 import {
   Card,
   CardContent,
@@ -340,6 +341,10 @@ export function CampaignsView() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
   const [exportingLeads, setExportingLeads] = useState(false)
   const [exportingQueue, setExportingQueue] = useState(false)
+
+  // Lead detail dialog state
+  const [leadDetailId, setLeadDetailId] = useState<string | null>(null)
+  const [leadDetailOpen, setLeadDetailOpen] = useState(false)
 
   const loadList = useCallback(
     async (silent = false) => {
@@ -1233,10 +1238,14 @@ export function CampaignsView() {
                                 />
                               </TableCell>
                               <TableCell className="font-medium">
-                                <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => { setLeadDetailId(l.id); setLeadDetailOpen(true) }}
+                                  className="flex items-center gap-1.5 text-left hover:text-violet-700 transition-colors"
+                                  title="Click to view lead timeline"
+                                >
                                   <span className="truncate">{l.email}</span>
                                   <CopyEmailButton email={l.email} />
-                                </div>
+                                </button>
                               </TableCell>
                               <TableCell className="text-muted-foreground">{l.companyName || '—'}</TableCell>
                               <TableCell>
@@ -1743,6 +1752,13 @@ export function CampaignsView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Lead detail dialog */}
+      <LeadDetailDialog
+        leadId={leadDetailId}
+        open={leadDetailOpen}
+        onOpenChange={setLeadDetailOpen}
+      />
     </div>
   )
 }

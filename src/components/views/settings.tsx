@@ -58,7 +58,19 @@ import {
   Mail,
   Clock,
   Building,
+  Webhook,
+  Plus,
+  Send,
 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 
 // ─── Types ────────────────────────────────────────────────────────────
 type SettingsMap = Record<string, string>
@@ -585,6 +597,8 @@ export function SettingsView() {
                 </div>
               </CardContent>
             </Card>
+
+            <WebhooksCard />
           </motion.div>
         </TabsContent>
 
@@ -659,5 +673,217 @@ export function SettingsView() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+// ─── Webhooks Card (Slack/Discord/generic integrations) ─────────────
+interface WebhookConfig {
+  id: string
+  url: string
+  type: 'slack' | 'discord' | 'generic'
+  enabled: boolean
+  events: string[]
+  label?: string
+}
+
+interface EventType {
+  type: string
+  label: string
+}
+
+function WebhooksCard() {
+  const { toast } = useToast()
+  const [webhooks, setWebhooks] = useState<WebhookConfig[]>([])
+  const [eventTypes, setEventTypes] = useState<EventType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [testingId, setTestingId] = useState<string | null>(null)
+  const [newUrl, setNewUrl] = useState('')
+  const [newType, setNewType] = useState<'slack' | 'discord' | 'generic'>('slack')
+  const [newLabel, setNewLabel] = useState('')
+  const [newEvents, setNewEvents] = useState<string[]>(['reply', 'bounce'])
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get<{ webhooks: WebhookConfig[]; eventTypes: EventType[] }>('/api/extras/webhooks')
+      setWebhooks(res.webhooks || [])
+      setEventTypes(res.eventTypes || [])
+    } catch (e: any) {
+      toast({ title: 'Failed to load webhooks', description: e?.message, variant: 'destructive' })
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
+
+  useEffect(() => { load() }, [load])
+
+  const handleCreate = async () => {
+    if (!newUrl) { toast({ title: 'URL required', variant: 'destructive' }); return }
+    setSaving(true)
+    try {
+      await api.post('/api/extras/webhooks', { url: newUrl, type: newType, events: newEvents, label: newLabel || `${newType} webhook` })
+      toast({ title: 'Webhook added' })
+      setDialogOpen(false)
+      setNewUrl(''); setNewLabel(''); setNewEvents(['reply', 'bounce'])
+      load()
+    } catch (e: any) {
+      toast({ title: 'Failed to add webhook', description: e?.message, variant: 'destructive' })
+    } finally { setSaving(false) }
+  }
+
+  const handleToggle = async (id: string, enabled: boolean) => {
+    setWebhooks((prev) => prev.map((w) => w.id === id ? { ...w, enabled } : w))
+    try { await api.put(`/api/extras/webhooks/${id}`, { enabled }) }
+    catch { load() }
+  }
+
+  const handleDelete = async (id: string) => {
+    setWebhooks((prev) => prev.filter((w) => w.id !== id))
+    try { await api.delete(`/api/extras/webhooks/${id}`); toast({ title: 'Webhook deleted' }) }
+    catch { load() }
+  }
+
+  const handleTest = async (webhook: WebhookConfig) => {
+    setTestingId(webhook.id)
+    try {
+      const res = await api.post<{ ok: boolean; error?: string; message?: string }>('/api/extras/webhooks/test', { url: webhook.url, type: webhook.type })
+      if (res.ok) toast({ title: 'Test sent', description: 'Check your Slack/Discord channel' })
+      else toast({ title: 'Test failed', description: res.error, variant: 'destructive' })
+    } catch (e: any) {
+      toast({ title: 'Test failed', description: e?.message, variant: 'destructive' })
+    } finally { setTestingId(null) }
+  }
+
+  const toggleEvent = (eventType: string) => {
+    setNewEvents((prev) => prev.includes(eventType) ? prev.filter((e) => e !== eventType) : [...prev, eventType])
+  }
+
+  return (
+    <Card className="p-6">
+      <CardHeader className="p-0 pb-6">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Webhook className="h-4 w-4" />
+          Webhooks (Slack / Discord)
+        </CardTitle>
+        <CardDescription>
+          Forward notifications to Slack, Discord, or any HTTP endpoint when events occur
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0 space-y-4">
+        {loading ? (
+          <div className="space-y-3">
+            {[0, 1].map((i) => <Skeleton key={i} className="h-20" />)}
+          </div>
+        ) : webhooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed rounded-lg">
+            <Webhook className="h-8 w-8 text-slate-300 mb-2" />
+            <p className="text-sm font-medium text-slate-700">No webhooks configured</p>
+            <p className="text-xs text-slate-500 mt-1 mb-4">Add a Slack or Discord webhook to get notified externally</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {webhooks.map((hook) => (
+              <div key={hook.id} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg shrink-0 ${
+                  hook.type === 'slack' ? 'bg-violet-100 text-violet-600' :
+                  hook.type === 'discord' ? 'bg-amber-100 text-amber-600' :
+                  'bg-slate-100 text-slate-600'
+                }`}>
+                  <Webhook className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-slate-900 truncate">{hook.label || `${hook.type} webhook`}</p>
+                    <Badge variant="outline" className="bg-slate-100 text-slate-600 capitalize">{hook.type}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 truncate">{hook.url}</p>
+                  {hook.events.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {hook.events.map((e) => (
+                        <span key={e} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{e}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handleTest(hook)} disabled={testingId === hook.id}>
+                    {testingId === hook.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                    Test
+                  </Button>
+                  <Switch checked={hook.enabled} onCheckedChange={(v) => handleToggle(hook.id, v)} />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-rose-600" onClick={() => handleDelete(hook.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button variant="outline" onClick={() => setDialogOpen(true)} className="w-full">
+          <Plus className="h-4 w-4" />
+          Add Webhook
+        </Button>
+
+        {/* Add webhook dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Webhook</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-sm">Label (optional)</Label>
+                <Input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="My Slack #alerts" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Type</Label>
+                <Select value={newType} onValueChange={(v: any) => setNewType(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="slack">Slack</SelectItem>
+                    <SelectItem value="discord">Discord</SelectItem>
+                    <SelectItem value="generic">Generic HTTP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Webhook URL</Label>
+                <Input value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://hooks.slack.com/services/..." />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Events to forward</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {eventTypes.map((evt) => (
+                    <label key={evt.type} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox checked={newEvents.includes(evt.type)} onCheckedChange={() => toggleEvent(evt.type)} />
+                      <span className="text-slate-700">{evt.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400">Leave all unchecked to forward everything</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreate} disabled={saving || !newUrl}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Add Webhook
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <div className="rounded-lg border border-dashed p-4 text-sm text-slate-500 space-y-2">
+          <p className="font-medium text-slate-700 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            How to get webhook URLs
+          </p>
+          <p className="text-xs"><strong>Slack:</strong> Go to your Slack workspace → Settings → Integrations → Incoming Webhooks → create a new webhook for a channel.</p>
+          <p className="text-xs"><strong>Discord:</strong> Go to your server → Channel Settings → Integrations → Webhooks → New Webhook → Copy URL.</p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
