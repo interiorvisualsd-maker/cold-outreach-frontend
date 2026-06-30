@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { api } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
@@ -64,6 +64,7 @@ import {
   RefreshCw,
   Bell,
   Reply,
+  Download,
 } from 'lucide-react'
 import {
   Dialog,
@@ -911,6 +912,9 @@ function WebhookDeliveryLogs() {
   const [logs, setLogs] = useState<DeliveryLog[]>([])
   const [summary, setSummary] = useState({ total: 0, success: 0, failed: 0 })
   const [loading, setLoading] = useState(true)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'success' | 'failed'>('all')
+  const [filterWebhook, setFilterWebhook] = useState<string>('all')
+  const [filterEvent, setFilterEvent] = useState<string>('all')
 
   const load = useCallback(async () => {
     try {
@@ -926,6 +930,51 @@ function WebhookDeliveryLogs() {
 
   useEffect(() => { load() }, [load])
 
+  // Derived unique filter options
+  const webhookOptions = useMemo(() => {
+    const set = new Set(logs.map((l) => l.webhookLabel))
+    return Array.from(set)
+  }, [logs])
+  const eventOptions = useMemo(() => {
+    const set = new Set(logs.map((l) => l.eventType))
+    return Array.from(set)
+  }, [logs])
+
+  // Filtered logs
+  const filteredLogs = useMemo(() => {
+    return logs.filter((l) => {
+      if (filterStatus !== 'all') {
+        if (filterStatus === 'success' && !l.success) return false
+        if (filterStatus === 'failed' && l.success) return false
+      }
+      if (filterWebhook !== 'all' && l.webhookLabel !== filterWebhook) return false
+      if (filterEvent !== 'all' && l.eventType !== filterEvent) return false
+      return true
+    })
+  }, [logs, filterStatus, filterWebhook, filterEvent])
+
+  const handleExport = () => {
+    const headers = ['timestamp', 'webhook', 'type', 'event', 'title', 'success', 'statusCode', 'error']
+    const rows = filteredLogs.map((l) => [
+      l.timestamp,
+      `"${l.webhookLabel}"`,
+      l.webhookType,
+      l.eventType,
+      `"${l.title.replace(/"/g, '""')}"`,
+      l.success ? 'yes' : 'no',
+      l.statusCode || '',
+      l.error ? `"${l.error.replace(/"/g, '""')}"` : '',
+    ])
+    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `webhook-deliveries-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -933,10 +982,18 @@ function WebhookDeliveryLogs() {
           <Clock className="h-4 w-4" />
           Delivery History
         </p>
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={load}>
-          <RefreshCw className="h-3 w-3" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-1">
+          {filteredLogs.length > 0 && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleExport}>
+              <Download className="h-3 w-3" />
+              Export
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={load}>
+            <RefreshCw className="h-3 w-3" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {summary.total > 0 && (
@@ -956,6 +1013,61 @@ function WebhookDeliveryLogs() {
         </div>
       )}
 
+      {/* Filters */}
+      {logs.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={filterStatus} onValueChange={(v: any) => setFilterStatus(v)}>
+            <SelectTrigger className="h-7 w-auto text-xs">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="success">Success only</SelectItem>
+              <SelectItem value="failed">Failed only</SelectItem>
+            </SelectContent>
+          </Select>
+          {webhookOptions.length > 1 && (
+            <Select value={filterWebhook} onValueChange={setFilterWebhook}>
+              <SelectTrigger className="h-7 w-auto text-xs">
+                <SelectValue placeholder="Webhook" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All webhooks</SelectItem>
+                {webhookOptions.map((w) => (
+                  <SelectItem key={w} value={w}>{w}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {eventOptions.length > 1 && (
+            <Select value={filterEvent} onValueChange={setFilterEvent}>
+              <SelectTrigger className="h-7 w-auto text-xs">
+                <SelectValue placeholder="Event" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All events</SelectItem>
+                {eventOptions.map((e) => (
+                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {(filterStatus !== 'all' || filterWebhook !== 'all' || filterEvent !== 'all') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => { setFilterStatus('all'); setFilterWebhook('all'); setFilterEvent('all') }}
+            >
+              Clear filters
+            </Button>
+          )}
+          <span className="text-[11px] text-slate-400 ml-auto">
+            {filteredLogs.length} of {logs.length}
+          </span>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}
@@ -966,9 +1078,14 @@ function WebhookDeliveryLogs() {
           <p className="text-xs text-slate-500">No deliveries yet</p>
           <p className="text-[11px] text-slate-400 mt-0.5">Delivery logs appear here when events fire</p>
         </div>
+      ) : filteredLogs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed rounded-lg">
+          <Info className="h-6 w-6 text-slate-300 mb-1" />
+          <p className="text-xs text-slate-500">No deliveries match your filters</p>
+        </div>
       ) : (
         <div className="max-h-64 overflow-y-auto space-y-1.5">
-          {logs.map((log, idx) => (
+          {filteredLogs.map((log, idx) => (
             <div key={idx} className="flex items-start gap-2 rounded-lg border border-slate-200 p-2 text-xs">
               <div className={`flex h-6 w-6 items-center justify-center rounded shrink-0 ${log.success ? 'bg-emerald-100' : 'bg-rose-100'}`}>
                 {log.success ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <XCircle className="h-3.5 w-3.5 text-rose-600" />}
@@ -1008,6 +1125,7 @@ function NotificationPreferencesCard() {
   const { toast } = useToast()
   const [eventTypes, setEventTypes] = useState<EventTypePref[]>([])
   const [loading, setLoading] = useState(true)
+  const [testing, setTesting] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -1035,6 +1153,18 @@ function NotificationPreferencesCard() {
     }
   }
 
+  const handleTest = async () => {
+    setTesting(true)
+    try {
+      await api.post('/api/extras/notification-prefs/test', { eventType: 'system' })
+      toast({ title: 'Test notification sent', description: 'Check your notification bell and/or Slack/Discord' })
+    } catch (e: any) {
+      toast({ title: 'Failed to send test', description: e?.message, variant: 'destructive' })
+    } finally {
+      setTesting(false)
+    }
+  }
+
   const eventTypeIcon = (type: string) => {
     const map: Record<string, React.ReactNode> = {
       reply: <Reply className="h-4 w-4" />,
@@ -1050,13 +1180,21 @@ function NotificationPreferencesCard() {
   return (
     <Card className="p-6">
       <CardHeader className="p-0 pb-6">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Bell className="h-4 w-4" />
-          Notification Preferences
-        </CardTitle>
-        <CardDescription>
-          Choose which events trigger in-app notifications and webhook deliveries
-        </CardDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bell className="h-4 w-4" />
+              Notification Preferences
+            </CardTitle>
+            <CardDescription className="mt-1.5">
+              Choose which events trigger in-app notifications and webhook deliveries
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" className="shrink-0" onClick={handleTest} disabled={testing}>
+            {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Send Test
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {loading ? (
