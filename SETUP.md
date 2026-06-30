@@ -1,81 +1,227 @@
-# 🚀 Lead Dispatcher — Setup Guide
+# 🚀 Complete Setup Guide — Lead Dispatcher
 
-**Private cold email automation with inbox rotation, warm-up engine, and unified inbox.**
-
-This file is your one-stop setup guide. Follow it top to bottom.
+**This guide will walk you through setting up your cold email automation app from scratch. Follow each step in order. Don't skip ahead!**
 
 ---
 
-## What You're Building
+## 📋 What You're Building
 
-A self-hosted alternative to Instantly.ai / Smartlead that runs on **free tiers**:
+A cold email app that:
+- Sends thousands of personalized emails per day
+- Rotates between multiple sending accounts automatically
+- Warms up new email accounts to protect reputation
+- Shows all replies in one unified inbox
+- Auto-stops follow-ups when someone replies
+- Sends you Slack/Discord alerts when stuff happens
 
-| Component | Platform | Cost |
-|-----------|----------|------|
-| Frontend | Vercel (free hobby tier) | $0 |
-| Backend API | Google Cloud Run ($300 free credit + always-free tier) | $0 |
-| Database | Neon Postgres (free 0.5GB) | $0 |
-| Background worker | Cloud Run Jobs + Cloud Scheduler | $0 |
-
-**Total monthly cost: $0** (for first 90 days via GCP credit, then ~$0-8/mo on always-free tiers)
-
----
-
-## Prerequisites
-
-You need:
-- A Google account (for GCP + Vercel login)
-- A GitHub account
-- The two repos (already created for you):
-  - **Frontend**: https://github.com/interiorvisualsd-maker/cold-outreach-frontend
-  - **Backend**: https://github.com/interiorvisualsd-maker/cold-outreach-backend
+**Total cost: $0** (everything runs on free tiers)
 
 ---
 
-## Step 1: Create Database (Neon Postgres) — 5 min
+## 🛠️ What You Need Before Starting
 
-1. Go to **https://neon.tech** → Sign up with Google (free, no credit card)
-2. Click **"Create Project"** → name it `lead-dispatcher`
-3. Select region closest to you (e.g., `us-east-2`)
-4. Copy the **connection string** — it looks like:
-   ```
-   postgresql://lead_dispatcher:abc123xyz@ep-cool-name-123.us-east-2.aws.neon.tech/lead-dispatcher?sslmode=require
-   ```
-5. Save this somewhere — you'll need it for both repos.
+1. **A computer** with internet (you're reading this, so ✅)
+2. **A Google account** (Gmail works) — for Google Cloud + Vercel login
+3. **A GitHub account** — your code repos are already there:
+   - Frontend: https://github.com/interiorvisualsd-maker/cold-outreach-frontend
+   - Backend: https://github.com/interiorvisualsd-maker/cold-outreach-backend
+4. **30-45 minutes** of focused time
 
 ---
 
-## Step 2: Deploy Backend (Google Cloud Run) — 15 min
+## 🗺️ The Big Picture (How It All Works)
 
-### 2a. Create a GCP project
+```
+┌─────────────────────────────────────────────┐
+│  1. Neon (Database)                         │
+│  Stores all your data: leads, emails,       │
+│  accounts, replies                          │
+│  → https://neon.tech (FREE)                 │
+└──────────────────┬──────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────┐
+│  2. Google Cloud Run (Backend)              │
+│  The "brain" — sends emails, checks replies │
+│  → https://console.cloud.google.com ($300   │
+│    free credit for 90 days, then $0-8/mo)   │
+└──────────────────┬──────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────┐
+│  3. Vercel (Frontend)                       │
+│  The website you log into                   │
+│  → https://vercel.com (FREE)                │
+└─────────────────────────────────────────────┘
+```
 
-1. Go to **https://console.cloud.google.com**
-2. Click the project dropdown → **"New Project"** → name it `lead-dispatcher`
-3. You'll get **$300 free credit** valid for 90 days
+**Think of it like a restaurant:**
+- **Neon** = the pantry (stores ingredients/data)
+- **Cloud Run** = the kitchen (does the cooking/processing)
+- **Vercel** = the dining room (where you sit and interact)
 
-### 2b. Enable APIs
+---
 
-In the GCP console, enable these APIs (search for each):
-- **Cloud Run API**
-- **Cloud Build API**
-- **Cloud Scheduler API**
-- **Artifact Registry API**
+## STEP 1: Create Your Database (Neon) — 5 minutes
 
-### 2c. Clone & push the backend repo
+Neon is a free database service. Think of it as a spreadsheet in the cloud that your app uses to remember everything.
+
+### 1.1 Sign up
+1. Open **https://neon.tech** in your browser
+2. Click **"Sign up"** (top right)
+3. Click **"Continue with Google"**
+4. Pick your Google account
+5. Fill in your name if asked
+
+### 1.2 Create a project
+1. You'll see a page asking to create your first project
+2. **Project name**: type `lead-dispatcher`
+3. **Database name**: leave it as `neondb` (default)
+4. **Region**: pick the one closest to you (if unsure, pick `US East (Ohio)`)
+5. **Postgres version**: leave default (17)
+6. Click **"Create project"**
+
+### 1.3 Copy your connection string
+After creating, you'll see a page with a connection string. It looks like this:
+
+```
+postgresql://lead_dispatcher_owner:AbCdEf123456@ep-cool-name-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+⚠️ **IMPORTANT**: Copy this ENTIRE string and paste it into a notepad. You'll need it 3 more times. This is your **DATABASE_URL**.
+
+> 💡 If you lose it, go to your Neon dashboard → click your project → "Connection Details" tab → copy the connection string.
+
+---
+
+## STEP 2: Set Up Google Cloud — 10 minutes
+
+This is where your backend (the "brain") will live.
+
+### 2.1 Create a Google Cloud project
+1. Open **https://console.cloud.google.com**
+2. Sign in with your Google account
+3. Click the project dropdown at the top (it might say "Select a project")
+4. Click **"New Project"** (top right of the popup)
+5. **Project name**: type `lead-dispatcher`
+6. Click **"Create"**
+7. Wait 10 seconds, then click the notification bell (🔔 top right) → "Select project"
+
+> 💡 You automatically get **$300 free credit** valid for 90 days. You won't be charged.
+
+### 2.2 Enable the services you need
+Your app needs 4 Google services turned on. Do this for each one:
+
+1. In the top search bar, type `Cloud Run API` and click the result
+2. Click **"Enable"** (if it says "Manage" instead, it's already on ✅)
+3. Go back, search `Cloud Build API` → Enable
+4. Search `Cloud Scheduler API` → Enable
+5. Search `Artifact Registry API` → Enable
+
+### 2.3 Install the Google Cloud CLI (command line tool)
+
+You need this to deploy your code. Pick your operating system:
+
+**If you're on Mac:**
+1. Open **https://cloud.google.com/sdk/docs/install**
+2. Scroll to "macOS (64-bit)" → download the `.tar.gz` file
+3. Double-click to extract it
+4. Open the extracted folder in Terminal
+5. Run: `./install.sh`
+6. Restart your Terminal
+
+**If you're on Windows:**
+1. Open **https://cloud.google.com/sdk/docs/install**
+2. Scroll to "Windows (64-bit)" → download the `.exe` installer
+3. Run the installer, click Next through all steps
+4. A black command window will pop up — follow the prompts
+
+**If you're on Linux:**
+```bash
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL
+gcloud init
+```
+
+### 2.4 Log in to Google Cloud from your terminal
+Open your terminal (Mac: Terminal app, Windows: search "cmd") and run:
 
 ```bash
+gcloud auth login
+```
+
+A browser window will open. Pick your Google account. Click "Allow".
+
+Then run:
+
+```bash
+gcloud config set project lead-dispatcher
+```
+
+> ✅ If you see a success message, you're logged in!
+
+---
+
+## STEP 3: Deploy Your Backend to Cloud Run — 15 minutes
+
+### 3.1 Download your backend code
+
+Open your terminal and run these commands one at a time:
+
+```bash
+# Go to your home folder
+cd ~
+
+# Download the backend code
 git clone https://github.com/interiorvisualsd-maker/cold-outreach-backend.git
+
+# Go into the folder
 cd cold-outreach-backend
 ```
 
-### 2d. Deploy to Cloud Run
+### 3.2 Set up the database
+
+Run these commands (replace `PASTE_YOUR_NEON_STRING_HERE` with your actual Neon connection string from Step 1.3):
 
 ```bash
-# Install gcloud CLI: https://cloud.google.com/sdk/docs/install
-gcloud auth login
-gcloud config set project lead-dispatcher
+# Tell the app where your database is
+export DATABASE_URL="PASTE_YOUR_NEON_STRING_HERE"
 
-# Deploy the API
+# Install dependencies (this takes 30-60 seconds)
+npm install
+
+# Create all the database tables
+npx prisma db push
+
+# Generate the database client
+npx prisma generate
+```
+
+> ✅ If you see "🚀 Your database is now in sync", it worked!
+
+### 3.3 Generate secret keys
+
+Your app needs two secret keys to keep passwords and data safe. Run these two commands and **save the outputs** — you'll need them:
+
+```bash
+# Generate key #1 (for passwords)
+openssl rand -hex 32
+```
+
+Copy the output (64 characters of random letters/numbers). This is your **JWT_SECRET**.
+
+```bash
+# Generate key #2 (for encrypting email passwords)
+openssl rand -hex 32
+```
+
+Copy the output. This is your **ENCRYPTION_KEY**.
+
+### 3.4 Deploy to Cloud Run
+
+Now the big moment! Run this command (replace ALL the placeholder values):
+
+```bash
 gcloud run deploy cold-outreach-api \
   --source . \
   --region us-central1 \
@@ -85,29 +231,31 @@ gcloud run deploy cold-outreach-api \
   --min-instances 0 \
   --max-instances 3 \
   --allow-unauthenticated \
-  --set-env-vars "DATABASE_URL=PASTE_YOUR_NEON_CONNECTION_STRING" \
-  --set-env-vars "JWT_SECRET=$(openssl rand -hex 32)" \
-  --set-env-vars "ENCRYPTION_KEY=$(openssl rand -hex 32)" \
+  --set-env-vars "DATABASE_URL=PASTE_YOUR_NEON_STRING_HERE" \
+  --set-env-vars "JWT_SECRET=PASTE_YOUR_JWT_SECRET" \
+  --set-env-vars "ENCRYPTION_KEY=PASTE_YOUR_ENCRYPTION_KEY" \
   --set-env-vars "FRONTEND_URL=https://cold-outreach-frontend.vercel.app" \
   --set-env-vars "PUBLIC_BASE_URL=https://cold-outreach-frontend.vercel.app"
 ```
 
-This takes 3-5 minutes. When done, you'll get a URL like:
-```
-https://cold-outreach-api-xxxxx-uc.a.run.app
-```
-**Save this URL** — you need it for the frontend.
+**What to replace:**
+- `PASTE_YOUR_NEON_STRING_HERE` → your Neon connection string from Step 1.3
+- `PASTE_YOUR_JWT_SECRET` → the first key you generated
+- `PASTE_YOUR_ENCRYPTION_KEY` → the second key you generated
 
-### 2e. Initialize the database
+**What happens next:**
+- Google will build your code (takes 3-5 minutes)
+- You'll see a progress bar with percentages
+- When done, you'll see a URL like:
+  ```
+  https://cold-outreach-api-1234567-uc.a.run.app
+  ```
 
-```bash
-# Run Prisma migration against your Neon database
-export DATABASE_URL="PASTE_YOUR_NEON_CONNECTION_STRING"
-npx prisma db push
-npx prisma generate
-```
+⚠️ **IMPORTANT**: Copy this URL! This is your **BACKEND_URL**. You'll need it in Step 4.
 
-### 2f. Set up the background worker (Cloud Run Job + Scheduler)
+### 3.5 Set up the background worker (sends emails automatically)
+
+Your app needs a "worker" that runs every 5 minutes to send queued emails and check for replies. Run these commands:
 
 ```bash
 # Create the worker job
@@ -115,185 +263,269 @@ gcloud run jobs create cold-outreach-worker \
   --source . \
   --region us-central1 \
   --command "bun" --args "src/worker-job.ts" \
-  --set-env-vars "DATABASE_URL=PASTE_YOUR_NEON_CONNECTION_STRING" \
-  --set-env-vars "JWT_SECRET=SAME_AS_ABOVE" \
-  --set-env-vars "ENCRYPTION_KEY=SAME_AS_ABOVE"
+  --set-env-vars "DATABASE_URL=PASTE_YOUR_NEON_STRING_HERE" \
+  --set-env-vars "JWT_SECRET=PASTE_YOUR_JWT_SECRET" \
+  --set-env-vars "ENCRYPTION_KEY=PASTE_YOUR_ENCRYPTION_KEY"
 
 # Schedule it to run every 5 minutes
 gcloud scheduler jobs create http cold-outreach-worker-trigger \
   --schedule "*/5 * * * *" \
-  --uri "https://cold-outreach-api-xxxxx-uc.a.run.app/api/dispatcher/process" \
+  --uri "PASTE_YOUR_BACKEND_URL/api/dispatcher/process" \
   --http-method POST \
   --oauth-service-account-email $(gcloud projects describe lead-dispatcher --format="value(projectNumber)")@cloudbuild.gserviceaccount.com
 ```
 
+**Replace:**
+- `PASTE_YOUR_NEON_STRING_HERE` → your Neon string
+- `PASTE_YOUR_JWT_SECRET` → your JWT secret
+- `PASTE_YOUR_ENCRYPTION_KEY` → your encryption key
+- `PASTE_YOUR_BACKEND_URL` → the URL from Step 3.4 (like `https://cold-outreach-api-1234567-uc.a.run.app`)
+
+> ✅ If you see "Created [cold-outreach-worker-trigger]", you're done with the backend!
+
 ---
 
-## Step 3: Deploy Frontend (Vercel) — 5 min
+## STEP 4: Deploy Your Frontend to Vercel — 5 minutes
 
-### 3a. Clone the frontend repo
+### 4.1 Go to Vercel
+1. Open **https://vercel.com**
+2. Click **"Sign Up"** (top right)
+3. Click **"Continue with GitHub"**
+4. Authorize Vercel to access your GitHub
 
-```bash
-git clone https://github.com/interiorvisualsd-maker/cold-outreach-frontend.git
-cd cold-outreach-frontend
-```
+### 4.2 Import your frontend repo
+1. Click **"Add New..."** → **"Project"**
+2. You'll see a list of your GitHub repos
+3. Find `cold-outreach-frontend` → click **"Import"**
 
-### 3b. Deploy on Vercel
+### 4.3 Configure the deployment
+1. **Framework Preset**: Should auto-detect "Next.js" ✅
+2. Don't touch the Build & Output Settings
+3. **IMPORTANT — Environment Variables**: Click the dropdown and add these one by one:
 
-1. Go to **https://vercel.com** → Sign in with GitHub
-2. Click **"Add New Project"** → Import `cold-outreach-frontend`
-3. Framework preset: **Next.js** (auto-detected)
-4. Under **"Environment Variables"**, add:
    | Name | Value |
    |------|-------|
-   | `NEXT_PUBLIC_API_URL` | `https://cold-outreach-api-xxxxx-uc.a.run.app` (your Cloud Run URL from Step 2d) |
-5. Click **"Deploy"** → wait 2-3 minutes
-6. You'll get a URL like: `https://cold-outreach-frontend.vercel.app`
+   | `NEXT_PUBLIC_API_URL` | `PASTE_YOUR_BACKEND_URL` (from Step 3.4) |
 
-### 3c. Update backend CORS
+   **Example value**: `https://cold-outreach-api-1234567-uc.a.run.app`
 
-Go back to Cloud Run → your `cold-outreach-api` service → **"Edit & Deploy New Revision"** → update the `FRONTEND_URL` env var to your Vercel URL:
-```
-FRONTEND_URL=https://cold-outreach-frontend.vercel.app
-```
+4. Click **"Deploy"**
 
----
+### 4.4 Wait for deployment
+- You'll see a cool animation while it builds
+- Takes 2-3 minutes
+- When done, you'll see **"Congratulations!"** with confetti 🎉
+- Click **"Visit"** to see your live site
 
-## Step 4: Create Your First User — 1 min
-
-1. Visit your Vercel URL: `https://cold-outreach-frontend.vercel.app`
-2. Click **"Sign up"**
-3. Enter your name, email, password
-4. You're in! The first user is automatically the admin.
+> ⚠️ The URL looks like `cold-outreach-frontend-abc123.vercel.app`. Copy this — it's your **FRONTEND_URL**.
 
 ---
 
-## Step 5: Optional — Enable DeepSeek LLM for Reply Sentiment
+## STEP 5: Connect Frontend and Backend — 2 minutes
 
-The app can auto-classify replies as "interested", "not_interested", "ooo", or "unsubscribe" using DeepSeek.
+Right now your frontend can't talk to your backend because of a security rule called CORS. Let's fix that.
 
-1. Get an API key at **https://platform.deepseek.com** (very cheap, ~$0.14/M tokens)
-2. In Cloud Run, add env var:
+### 5.1 Update backend environment variables
+1. Go back to **Google Cloud Console** → **Cloud Run**
+2. Click your `cold-outreach-api` service
+3. Click **"Edit & Deploy New Revision"** (top right)
+4. Scroll down to **"Variables & Secrets"**
+5. Update `FRONTEND_URL` to your Vercel URL:
    ```
-   DEEPSEEK_API_KEY=sk-your-deepseek-key
+   FRONTEND_URL=https://cold-outreach-frontend-abc123.vercel.app
    ```
-3. Redeploy the backend
+6. Also update `PUBLIC_BASE_URL` to the same Vercel URL
+7. Click **"Deploy"** at the bottom
+
+> ✅ Takes about 2 minutes to redeploy.
 
 ---
 
-## Architecture
+## STEP 6: Create Your Account — 1 minute
 
+1. Open your Vercel URL in your browser
+2. You'll see a login page with a violet gradient on the left
+3. Click **"Sign up"** (bottom link)
+4. Fill in:
+   - **Full Name**: your name
+   - **Email**: your email
+   - **Password**: pick something strong (6+ characters)
+5. Click **"Create account"**
+6. You're in! 🎉
+
+> The first person to sign up automatically becomes the admin.
+
+---
+
+## STEP 7: Add Demo Data (Optional but Recommended) — 30 seconds
+
+To see how the app looks with real data:
+
+1. On the dashboard, click **"Seed Demo Data"** (violet button, top right)
+2. Wait 2 seconds
+3. You'll now see:
+   - 4 sending accounts
+   - 2 campaigns with 48 leads
+   - 40 warmup messages
+   - 12 replies
+   - 5 notifications
+
+---
+
+## STEP 8: Connect Real Email Accounts — When You're Ready
+
+When you want to send real emails (not just demo):
+
+1. Go to **Sending Accounts** (left sidebar)
+2. Click **"Add Account"**
+3. Fill in your SMTP/IMAP details:
+   - **For Gmail**: use an "App Password" (not your regular password)
+     - Go to https://myaccount.google.com → Security → 2-Step Verification → App passwords
+     - Create a password for "Mail"
+     - SMTP host: `smtp.gmail.com`, port: `465`
+     - IMAP host: `imap.gmail.com`, port: `993`
+4. Click **"Create Account"**
+5. Click **"Test"** to verify the connection works
+
+> ⚠️ Start with the daily cap at 50, not 100. You can increase it later once the account is warmed up.
+
+---
+
+## STEP 9: Import Your Leads — When You're Ready
+
+1. Go to **Import Leads** (left sidebar)
+2. Select a campaign (or create one first)
+3. Drag your CSV file into the upload area
+   - **Any filename works** — the app auto-detects columns
+4. Review the column mapping (it's usually correct)
+5. Click **"Import"**
+6. You'll see how many leads were imported, skipped (duplicates), etc.
+
+---
+
+## STEP 10: Optional — Enable AI Reply Tagging (DeepSeek)
+
+If you want the app to automatically classify replies as "interested", "not interested", etc:
+
+1. Go to **https://platform.deepseek.com** → sign up
+2. Add some credits ($5 is plenty — it's very cheap)
+3. Copy your API key (starts with `sk-`)
+4. In Google Cloud Run, edit your `cold-outreach-api` service
+5. Add environment variable:
+   ```
+   DEEPSEEK_API_KEY=sk-your-key-here
+   ```
+6. Deploy
+
+Now replies get auto-tagged! You can also test it in **Settings → Integrations → DeepSeek LLM → Test Connection**.
+
+---
+
+## STEP 11: Optional — Set Up Slack/Discord Alerts
+
+Get notified in Slack or Discord when someone replies, bounces, or unsubscribes:
+
+1. **For Slack**:
+   - Go to your Slack workspace → Settings → Integrations → Incoming Webhooks
+   - Create a webhook for a channel (like #alerts)
+   - Copy the URL (looks like `https://hooks.slack.com/services/...`)
+
+2. **For Discord**:
+   - Go to your server → Channel Settings → Integrations → Webhooks
+   - New Webhook → Copy URL
+
+3. In your app: **Settings → Integrations → Webhooks → Add Webhook**
+4. Paste the URL, pick the type (Slack/Discord), select events
+5. Click **"Add Webhook"**
+6. Click **"Test"** to verify
+
+---
+
+## 🎯 You're Done! Here's What You Can Do Now
+
+| Feature | Where to find it |
+|---------|-----------------|
+| View analytics | Dashboard |
+| Add email accounts | Sending Accounts |
+| Create campaigns | Campaigns |
+| Upload leads | Import Leads |
+| Check the send queue | Dispatcher |
+| See warm-up progress | Warm-up |
+| Read and reply to emails | Unibox |
+| Manage blocked emails | Suppression |
+| Create email templates | Templates |
+| Add team members | Team |
+| Configure settings | Settings |
+
+### Pro Tips:
+- **Press Cmd+K (Mac) or Ctrl+K (Windows)** anywhere to open the command palette — search leads, navigate views, and more
+- **Click any lead email** in the campaigns table or unibox to see their full activity timeline
+- **Set daily caps to 50** for new accounts — increase to 100 only after warm-up
+- **Check the notification bell** (top right) for alerts about replies, bounces, and failures
+
+---
+
+## 🆘 Troubleshooting
+
+### "Failed to fetch" on the website
+→ Your frontend can't reach the backend. Check:
+1. Is `NEXT_PUBLIC_API_URL` set correctly in Vercel? (should be your Cloud Run URL)
+2. Is `FRONTEND_URL` set correctly in Cloud Run? (should be your Vercel URL)
+3. Did you redeploy after changing env vars?
+
+### "Unauthorized" when using the app
+→ Your login token expired. Just log out and log back in.
+
+### Database connection errors
+→ Your Neon string needs `?sslmode=require` at the end. Check:
 ```
-┌─────────────────────────────────────────┐
-│  Vercel (Frontend)                      │
-│  Next.js 16 + TypeScript + Tailwind 4   │
-│  URL: cold-outreach-frontend.vercel.app │
-└──────────────────┬──────────────────────┘
-                   │ HTTPS + JWT
-                   ▼
-┌─────────────────────────────────────────┐
-│  Cloud Run (Backend API)                │
-│  Hono on Bun                            │
-│  URL: cold-outreach-api-xxxx.a.run.app  │
-│  Scales 0→3 instances                   │
-└──────────────────┬──────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────┐
-│  Neon Postgres (shared)                 │
-│  All state: accounts, leads, queue,     │
-│  warmup, replies, suppression           │
-└─────────────────────────────────────────┘
-                   ▲
-                   │ triggers every 5 min
-┌──────────────────┴──────────────────────┐
-│  Cloud Scheduler → Cloud Run Job        │
-│  (Worker: sends emails, polls IMAP,     │
-│   runs warmup, sequence breaker)        │
-└─────────────────────────────────────────┘
+postgresql://user:pass@host/db?sslmode=require
 ```
 
----
+### Cloud Run deployment fails
+→ Make sure you:
+1. Enabled all 4 APIs (Cloud Run, Cloud Build, Cloud Scheduler, Artifact Registry)
+2. Ran `gcloud auth login` successfully
+3. Are in the `cold-outreach-backend` folder when deploying
 
-## Features
+### Worker not running
+→ Check:
+1. Go to Cloud Console → Cloud Scheduler
+2. Is the `cold-outreach-worker-trigger` job there?
+3. Click it → "Run now" to test manually
+4. Check the logs for errors
 
-- ✅ **SMTP/IMAP Account Manager** — connect unlimited sending accounts with encrypted credentials
-- ✅ **Inbox Rotation** — round-robin sending with 50-100/day + hourly caps, auto-pause on failures
-- ✅ **Warm-up Engine** — peer-to-peer warmup with spam-folder rescue, auto-reply, ramp-up scheduler
-- ✅ **Campaign Builder** — 3-step email sequences with merge fields
-- ✅ **CSV Import** — any filename, fuzzy column auto-detection, dedup, suppression check
-- ✅ **Unibox** — unified reply inbox with thread view, sentiment filtering, manual reply
-- ✅ **Sequence Breaking** — auto-cancel follow-ups when a lead replies
-- ✅ **Open/Click Tracking** — tracking pixel + link wrapping
-- ✅ **CAN-SPAM Compliant** — unsubscribe footer + suppression list
-- ✅ **Analytics** — deliverability score, 7-day trends, sentiment breakdown
-- ✅ **Templates** — reusable email templates with merge fields
-- ✅ **Team Management** — multi-user with admin/member roles
-- ✅ **Notifications** — in-app alert center for replies, bounces, failures
-- ✅ **DeepSeek LLM** — AI reply sentiment tagging (optional)
-
----
-
-## Local Development
-
-```bash
-# Frontend
-cd cold-outreach-frontend
-bun install
-cp .env.example .env.local
-# Edit .env.local: NEXT_PUBLIC_API_URL=http://localhost:3001
-bun run dev  # runs on port 3000
-
-# Backend (separate terminal)
-cd cold-outreach-backend
-bun install
-cp .env.example .env
-# Edit .env: DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY
-bun run db:push
-bun run dev  # runs on port 3001
-```
+### SMTP sending fails
+→ Common causes:
+1. **Gmail**: Use App Password, not your regular password
+2. **Less secure apps**: Some providers block SMTP by default
+3. **Wrong port**: Try 587 (TLS) instead of 465 (SSL)
 
 ---
 
-## Troubleshooting
+## 💰 Cost Breakdown
 
-**"Failed to fetch" on frontend**
-→ Check `NEXT_PUBLIC_API_URL` is set correctly in Vercel env vars
-→ Check `FRONTEND_URL` is set correctly in Cloud Run env vars (CORS)
-
-**"Unauthorized" on API calls**
-→ Your JWT may have expired. Log out and log back in.
-
-**Database connection errors**
-→ Verify `DATABASE_URL` has `?sslmode=require` at the end (Neon requires SSL)
-
-**Worker not running**
-→ Check Cloud Scheduler is enabled
-→ Check the service account has `roles/run.invoker` permission
-
-**SMTP sending fails**
-→ Verify your SMTP credentials (use app passwords for Gmail, not your regular password)
-→ Check your provider allows SMTP access
-
----
-
-## Cost Breakdown (After 90-Day Free Credit)
-
-| Component | Always-Free Tier | Your Usage | Cost |
-|-----------|-----------------|------------|------|
-| Vercel | Hobby: free | Static Next.js | $0 |
-| Cloud Run API | 240k vCPU-sec + 450k GiB-sec/mo | ~5% of free tier | $0 |
+| Service | Free Tier | Your Usage | Monthly Cost |
+|---------|-----------|------------|--------------|
+| Vercel | Hobby (free) | Static site | $0 |
+| Cloud Run API | 240k vCPU-sec/mo free | ~5% of free tier | $0 |
 | Cloud Run Worker | Same free tier | ~10% | $0 |
 | Cloud Scheduler | 3 jobs free | 1 job | $0 |
 | Neon Postgres | 0.5GB free | <100MB | $0 |
-| **Total** | | | **$0/mo** |
+| **Total** | | | **$0/month** |
 
-Optional: Cloud NAT for static sending IP (~$33/mo) — recommended for production cold email deliverability.
+After 90 days, the GCP $300 credit expires but you stay on the always-free tier. Expected cost: **$0-8/month**.
+
+Optional: Cloud NAT for a static sending IP (~$33/month) — recommended for serious cold email deliverability.
 
 ---
 
-## Support
+## 📞 Need Help?
 
-- Full code: https://github.com/interiorvisualsd-maker/cold-outreach-frontend + cold-outreach-backend
-- Detailed deployment: see `DEPLOYMENT.md` in this repo
-- Worklog: see `worklog.md` for development history
+- **Code**: https://github.com/interiorvisualsd-maker/cold-outreach-frontend + cold-outreach-backend
+- **Worklog**: See `worklog.md` in the repo for full development history
+- **Setup video**: The steps above are all you need — take it one step at a time!
+
+---
+
+**🎉 Congratulations! You now have your own cold email automation platform running for $0/month.**
