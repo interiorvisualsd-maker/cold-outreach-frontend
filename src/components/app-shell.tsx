@@ -35,8 +35,11 @@ import {
   Loader2,
   Sparkles,
   ChevronDown,
+  Search,
+  Command,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CommandPalette } from './command-palette'
 
 export type ViewId =
   | 'dashboard'
@@ -316,8 +319,21 @@ interface AppShellProps {
 export function AppShell({ current, onNavigate, children }: AppShellProps) {
   const { user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   const activeItem = NAV_ITEMS.find((n) => n.id === current)
+
+  // Cmd+K / Ctrl+K to open command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteOpen((prev) => !prev)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   const handleNav = (id: ViewId) => {
     onNavigate(id)
@@ -413,9 +429,26 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            {/* Search / Command palette trigger */}
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors text-sm"
+            >
+              <Search className="h-4 w-4" />
+              <span className="text-xs">Search...</span>
+              <kbd className="flex items-center gap-0.5 h-5 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-medium text-slate-400 ml-2">
+                <Command className="h-2.5 w-2.5" />K
+              </kbd>
+            </button>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="sm:hidden flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
+            >
+              <Search className="h-[18px] w-[18px]" />
+            </button>
             <NotificationsDropdown />
-            <div className="h-6 w-px bg-slate-200 mx-2" />
+            <div className="h-6 w-px bg-slate-200 mx-1" />
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-violet-100 text-violet-700 text-xs font-semibold">
@@ -434,6 +467,14 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
           </div>
         </main>
       </div>
+
+      {/* Command palette */}
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onNavigate={handleNav}
+        onLogout={logout}
+      />
     </div>
   )
 }

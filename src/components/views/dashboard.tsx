@@ -43,6 +43,8 @@ import {
   Sprout,
   TrendingUp,
   Sparkles,
+  FileSpreadsheet,
+  Flame,
 } from 'lucide-react'
 import {
   Area,
@@ -235,18 +237,18 @@ function sentimentBadgeClass(s: string | null | undefined): string | null {
 
 function activityIcon(type: string, sentiment?: string | null) {
   if (type === 'sent') {
-    return { icon: ArrowUpRight, tone: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' }
+    return { icon: ArrowUpRight, tone: 'text-emerald-600 bg-emerald-50' }
   }
   if (type === 'reply') {
     if (sentiment === 'interested') {
-      return { icon: ThumbsUp, tone: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' }
+      return { icon: ThumbsUp, tone: 'text-emerald-600 bg-emerald-50' }
     }
     if (sentiment === 'not_interested' || sentiment === 'unsubscribe') {
-      return { icon: MessageCircle, tone: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30' }
+      return { icon: MessageCircle, tone: 'text-rose-600 bg-rose-50' }
     }
-    return { icon: Reply, tone: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' }
+    return { icon: Reply, tone: 'text-amber-600 bg-amber-50' }
   }
-  return { icon: Activity, tone: 'text-slate-600 bg-slate-100 dark:bg-slate-800' }
+  return { icon: Activity, tone: 'text-slate-600 bg-slate-100' }
 }
 
 function shortDate(iso: string): string {
@@ -255,7 +257,7 @@ function shortDate(iso: string): string {
 }
 
 // ─── Component ────────────────────────────────────────────────────────
-export function DashboardView() {
+export function DashboardView({ onNavigate }: { onNavigate?: (view: 'accounts' | 'campaigns' | 'csv' | 'unibox' | 'templates' | 'warmup') => void }) {
   const { toast } = useToast()
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null)
   const [stats, setStats] = useState<DispatcherStats | null>(null)
@@ -393,7 +395,7 @@ export function DashboardView() {
       sub: `7-day total · ${totals.totalSent} all-time`,
       icon: Mail,
       tone: 'text-emerald-600',
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      bg: 'bg-emerald-50',
     },
     {
       label: 'Reply Rate',
@@ -401,7 +403,7 @@ export function DashboardView() {
       sub: `${totals.totalReplies} replies received`,
       icon: Reply,
       tone: 'text-amber-600',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      bg: 'bg-amber-50',
     },
     {
       label: 'Deliverability',
@@ -416,10 +418,10 @@ export function DashboardView() {
             : 'text-rose-600',
       bg:
         score >= 80
-          ? 'bg-emerald-50 dark:bg-emerald-900/20'
+          ? 'bg-emerald-50'
           : score >= 60
-            ? 'bg-amber-50 dark:bg-amber-900/20'
-            : 'bg-rose-50 dark:bg-rose-900/20',
+            ? 'bg-amber-50'
+            : 'bg-rose-50',
     },
     {
       label: 'Active Accounts',
@@ -427,7 +429,7 @@ export function DashboardView() {
       sub: `of ${summary.totalAccounts} total configured`,
       icon: Users,
       tone: 'text-slate-600',
-      bg: 'bg-slate-100 dark:bg-slate-800/50',
+      bg: 'bg-slate-100',
     },
   ]
 
@@ -454,7 +456,7 @@ export function DashboardView() {
             size="sm"
             onClick={handleSeed}
             disabled={seeding}
-            className={total7d === 0 && totals.totalSent === 0 ? 'ld-pulse-soft border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300' : ''}
+            className={total7d === 0 && totals.totalSent === 0 ? 'ld-pulse-soft border-amber-300 text-amber-700 hover:bg-amber-50' : ''}
             title={total7d === 0 && totals.totalSent === 0 ? 'No data yet — click to seed demo data' : 'Reseed demo data'}
           >
             {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -495,6 +497,34 @@ export function DashboardView() {
           )
         })}
       </div>
+
+      {/* Quick actions */}
+      {onNavigate && (
+        <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide mr-1">Quick actions:</span>
+            {[
+              { label: 'New Campaign', view: 'campaigns' as const, icon: Send },
+              { label: 'Import CSV', view: 'csv' as const, icon: FileSpreadsheet },
+              { label: 'Add Account', view: 'accounts' as const, icon: Users },
+              { label: 'Check Unibox', view: 'unibox' as const, icon: Inbox },
+              { label: 'Warm-up Status', view: 'warmup' as const, icon: Flame },
+            ].map((action) => {
+              const Icon = action.icon
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => onNavigate(action.view)}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-all"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {action.label}
+                </button>
+              )
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Deliverability ring + breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -32,7 +32,7 @@ function AppContent() {
 
   return (
     <AppShell current={view} onNavigate={setView}>
-      {view === 'dashboard' && <DashboardView />}
+      {view === 'dashboard' && <DashboardView onNavigate={(v) => setView(v)} />}
       {view === 'accounts' && <AccountsView />}
       {view === 'campaigns' && <CampaignsView />}
       {view === 'csv' && <CsvUploadView />}
