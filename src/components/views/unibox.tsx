@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { downloadCsv } from '@/lib/download'
 import { useToast } from '@/hooks/use-toast'
+import { LeadDetailDialog } from '@/components/lead-detail-dialog'
 import {
   Card,
   CardContent,
@@ -199,6 +200,8 @@ export function UniboxView() {
   const [sending, setSending] = useState(false)
   const [sentimentFilter, setSentimentFilter] = useState<string>('all')
   const [exportingReplies, setExportingReplies] = useState(false)
+  const [leadDetailId, setLeadDetailId] = useState<string | null>(null)
+  const [leadDetailOpen, setLeadDetailOpen] = useState(false)
 
   const loadList = useCallback(
     async (silent = false) => {
@@ -600,7 +603,13 @@ export function UniboxView() {
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Lead:</span>
-                      <span className="font-medium">{detail.lead.email}</span>
+                      <button
+                        onClick={() => { setLeadDetailId(detail.lead.id); setLeadDetailOpen(true) }}
+                        className="font-medium text-violet-700 hover:text-violet-900 hover:underline transition-colors"
+                        title="Click to view lead timeline"
+                      >
+                        {detail.lead.email}
+                      </button>
                     </div>
                     {detail.lead.companyName && (
                       <div className="flex items-center gap-2">
@@ -739,6 +748,13 @@ export function UniboxView() {
           )}
         </Card>
       </div>
+
+      {/* Lead detail dialog */}
+      <LeadDetailDialog
+        leadId={leadDetailId}
+        open={leadDetailOpen}
+        onOpenChange={setLeadDetailOpen}
+      />
     </div>
   )
 }
