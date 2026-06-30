@@ -61,6 +61,7 @@ import {
   Webhook,
   Plus,
   Send,
+  RefreshCw,
 } from 'lucide-react'
 import {
   Dialog,
@@ -883,7 +884,110 @@ function WebhooksCard() {
           <p className="text-xs"><strong>Slack:</strong> Go to your Slack workspace → Settings → Integrations → Incoming Webhooks → create a new webhook for a channel.</p>
           <p className="text-xs"><strong>Discord:</strong> Go to your server → Channel Settings → Integrations → Webhooks → New Webhook → Copy URL.</p>
         </div>
+
+        <WebhookDeliveryLogs />
       </CardContent>
     </Card>
+  )
+}
+
+// ─── Webhook Delivery Logs ───────────────────────────────────────────
+interface DeliveryLog {
+  webhookId: string
+  webhookLabel: string
+  webhookType: string
+  eventType: string
+  title: string
+  success: boolean
+  statusCode?: number
+  error?: string
+  timestamp: string
+}
+
+function WebhookDeliveryLogs() {
+  const [logs, setLogs] = useState<DeliveryLog[]>([])
+  const [summary, setSummary] = useState({ total: 0, success: 0, failed: 0 })
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get<{ deliveries: DeliveryLog[]; summary: { total: number; success: number; failed: number } }>('/api/extras/webhooks/deliveries')
+      setLogs(res.deliveries || [])
+      setSummary(res.summary || { total: 0, success: 0, failed: 0 })
+    } catch {
+      // silent
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-slate-700 flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          Delivery History
+        </p>
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={load}>
+          <RefreshCw className="h-3 w-3" />
+          Refresh
+        </Button>
+      </div>
+
+      {summary.total > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-lg border border-slate-200 p-2 text-center">
+            <p className="text-lg font-bold text-slate-900">{summary.total}</p>
+            <p className="text-[10px] text-slate-400 uppercase">Total</p>
+          </div>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-center">
+            <p className="text-lg font-bold text-emerald-700">{summary.success}</p>
+            <p className="text-[10px] text-emerald-600 uppercase">Success</p>
+          </div>
+          <div className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-center">
+            <p className="text-lg font-bold text-rose-700">{summary.failed}</p>
+            <p className="text-[10px] text-rose-600 uppercase">Failed</p>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed rounded-lg">
+          <Send className="h-6 w-6 text-slate-300 mb-1" />
+          <p className="text-xs text-slate-500">No deliveries yet</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Delivery logs appear here when events fire</p>
+        </div>
+      ) : (
+        <div className="max-h-64 overflow-y-auto space-y-1.5">
+          {logs.map((log, idx) => (
+            <div key={idx} className="flex items-start gap-2 rounded-lg border border-slate-200 p-2 text-xs">
+              <div className={`flex h-6 w-6 items-center justify-center rounded shrink-0 ${log.success ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                {log.success ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <XCircle className="h-3.5 w-3.5 text-rose-600" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium text-slate-700 truncate">{log.webhookLabel}</span>
+                  <Badge variant="outline" className="bg-slate-100 text-slate-500 text-[10px] capitalize">{log.webhookType}</Badge>
+                  <Badge variant="outline" className="bg-slate-100 text-slate-500 text-[10px]">{log.eventType}</Badge>
+                </div>
+                <p className="text-slate-500 truncate mt-0.5">{log.title}</p>
+                {!log.success && log.error && (
+                  <p className="text-rose-500 mt-0.5 truncate">Error: {log.error}</p>
+                )}
+                <p className="text-slate-400 mt-0.5">
+                  {new Date(log.timestamp).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

@@ -24,6 +24,7 @@ import {
   CornerDownLeft,
   Mail,
   Building2,
+  Clock,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { ViewId } from './app-shell'
@@ -84,6 +85,16 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout, onLea
   const [searchingLeads, setSearchingLeads] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
+  // Recently viewed leads (stored in localStorage)
+  const [recentLeads, setRecentLeads] = useState<LeadResult[]>([])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('ld_recent_leads')
+      if (stored) setRecentLeads(JSON.parse(stored).slice(0, 5))
+    } catch {}
+  }, [])
+
   // Debounced lead search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -121,6 +132,15 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout, onLea
     },
   }))
 
+  const recordRecentLead = (lead: LeadResult) => {
+    setRecentLeads((prev) => {
+      const filtered = prev.filter((l) => l.id !== lead.id)
+      const updated = [lead, ...filtered].slice(0, 5)
+      try { localStorage.setItem('ld_recent_leads', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+  }
+
   const leadCommands: CommandItem[] = leadResults.map((lead) => ({
     id: `lead-${lead.id}`,
     label: lead.email,
@@ -128,10 +148,27 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout, onLea
     icon: lead.companyName ? Building2 : Mail,
     group: 'Leads',
     action: () => {
+      recordRecentLead(lead)
       if (onLeadSelect && lead.campaign) {
         onLeadSelect(lead.id, lead.campaignId)
       } else {
-        // Fallback: navigate to campaigns view
+        onNavigate('campaigns')
+      }
+      onOpenChange(false)
+    },
+  }))
+
+  // Recent leads only show when no search query
+  const recentLeadCommands: CommandItem[] = (query.length < 2 ? recentLeads : []).map((lead) => ({
+    id: `recent-${lead.id}`,
+    label: lead.email,
+    description: `${lead.companyName || 'Unknown company'} · ${lead.campaign?.name || 'No campaign'}`,
+    icon: Clock,
+    group: 'Recent',
+    action: () => {
+      if (onLeadSelect && lead.campaign) {
+        onLeadSelect(lead.id, lead.campaignId)
+      } else {
         onNavigate('campaigns')
       }
       onOpenChange(false)
@@ -153,10 +190,12 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout, onLea
     : []
 
   // When query is short, show nav + actions. When query is 2+ chars, show leads + nav (filtered).
-  const allCommands = [...leadCommands, ...navCommands, ...actionCommands]
+  const allCommands = [...recentLeadCommands, ...leadCommands, ...navCommands, ...actionCommands]
   const filtered = allCommands.filter((cmd) => {
     // Lead results always show when present (they're already server-filtered)
     if (cmd.group === 'Leads') return true
+    // Recent leads only show when no search query (already filtered by recentLeadCommands construction)
+    if (cmd.group === 'Recent') return query.length < 2
     if (!query || query.length < 2) return true
     const q = query.toLowerCase()
     return (
