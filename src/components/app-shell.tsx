@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CommandPalette } from './command-palette'
+import { LeadDetailDialog } from './lead-detail-dialog'
 
 export type ViewId =
   | 'dashboard'
@@ -320,6 +321,8 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
   const { user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [leadDetailId, setLeadDetailId] = useState<string | null>(null)
+  const [leadDetailOpen, setLeadDetailOpen] = useState(false)
 
   const activeItem = NAV_ITEMS.find((n) => n.id === current)
 
@@ -338,6 +341,11 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
   const handleNav = (id: ViewId) => {
     onNavigate(id)
     setMobileOpen(false)
+  }
+
+  const handleLeadSelect = (leadId: string, _campaignId: string) => {
+    setLeadDetailId(leadId)
+    setLeadDetailOpen(true)
   }
 
   const groupedItems = GROUP_ORDER.map((group) => ({
@@ -474,6 +482,14 @@ export function AppShell({ current, onNavigate, children }: AppShellProps) {
         onOpenChange={setPaletteOpen}
         onNavigate={handleNav}
         onLogout={logout}
+        onLeadSelect={handleLeadSelect}
+      />
+
+      {/* Lead detail dialog */}
+      <LeadDetailDialog
+        leadId={leadDetailId}
+        open={leadDetailOpen}
+        onOpenChange={setLeadDetailOpen}
       />
     </div>
   )
