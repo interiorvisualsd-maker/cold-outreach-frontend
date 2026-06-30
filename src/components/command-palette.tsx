@@ -287,9 +287,23 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onLogout, onLea
           ) : (
             Object.entries(grouped).map(([group, items]) => (
               <div key={group} className="px-2">
-                <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  {group}{group === 'Leads' && leadResults.length > 0 ? ` (${leadResults.length})` : ''}
-                </p>
+                <div className="flex items-center justify-between px-2 py-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    {group}{group === 'Leads' && leadResults.length > 0 ? ` (${leadResults.length})` : ''}
+                  </p>
+                  {group === 'Recent' && recentLeads.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setRecentLeads([])
+                        try { localStorage.removeItem('ld_recent_leads') } catch {}
+                      }}
+                      className="text-[10px] font-medium text-slate-400 hover:text-rose-600 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 {items.map((cmd) => {
                   const isSelected = flatIndex === selectedIndex
                   flatIndex++

@@ -62,6 +62,8 @@ import {
   Plus,
   Send,
   RefreshCw,
+  Bell,
+  Reply,
 } from 'lucide-react'
 import {
   Dialog,
@@ -599,6 +601,7 @@ export function SettingsView() {
               </CardContent>
             </Card>
 
+            <NotificationPreferencesCard />
             <WebhooksCard />
           </motion.div>
         </TabsContent>
@@ -989,5 +992,102 @@ function WebhookDeliveryLogs() {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Notification Preferences Card ───────────────────────────────────
+interface EventTypePref {
+  type: string
+  label: string
+  description: string
+  default: boolean
+  enabled: boolean
+}
+
+function NotificationPreferencesCard() {
+  const { toast } = useToast()
+  const [eventTypes, setEventTypes] = useState<EventTypePref[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get<{ prefs: Record<string, boolean>; eventTypes: EventTypePref[] }>('/api/extras/notification-prefs')
+      setEventTypes(res.eventTypes || [])
+    } catch (e: any) {
+      toast({ title: 'Failed to load preferences', description: e?.message, variant: 'destructive' })
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
+
+  useEffect(() => { load() }, [load])
+
+  const handleToggle = async (eventType: string, enabled: boolean) => {
+    // Optimistic update
+    setEventTypes((prev) => prev.map((e) => e.type === eventType ? { ...e, enabled } : e))
+    try {
+      await api.put('/api/extras/notification-prefs', { [eventType]: enabled })
+      toast({ title: enabled ? 'Notifications enabled' : 'Notifications disabled', description: `${eventTypes.find((e) => e.type === eventType)?.label}` })
+    } catch (e: any) {
+      // Revert on failure
+      setEventTypes((prev) => prev.map((e) => e.type === eventType ? { ...e, enabled: !enabled } : e))
+      toast({ title: 'Failed to update', description: e?.message, variant: 'destructive' })
+    }
+  }
+
+  const eventTypeIcon = (type: string) => {
+    const map: Record<string, React.ReactNode> = {
+      reply: <Reply className="h-4 w-4" />,
+      bounce: <Mail className="h-4 w-4" />,
+      unsubscribe: <Mail className="h-4 w-4" />,
+      failure: <AlertTriangle className="h-4 w-4" />,
+      warmup: <Flame className="h-4 w-4" />,
+      system: <Info className="h-4 w-4" />,
+    }
+    return map[type] || <Info className="h-4 w-4" />
+  }
+
+  return (
+    <Card className="p-6">
+      <CardHeader className="p-0 pb-6">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Bell className="h-4 w-4" />
+          Notification Preferences
+        </CardTitle>
+        <CardDescription>
+          Choose which events trigger in-app notifications and webhook deliveries
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="space-y-2">
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {eventTypes.map((evt) => (
+              <div key={evt.type} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg shrink-0 ${
+                  evt.enabled ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  {eventTypeIcon(evt.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900">{evt.label}</p>
+                  <p className="text-xs text-slate-500">{evt.description}</p>
+                </div>
+                <Switch
+                  checked={evt.enabled}
+                  onCheckedChange={(v) => handleToggle(evt.type, v)}
+                />
+              </div>
+            ))}
+            <p className="text-xs text-slate-400 mt-2 px-1">
+              Disabled events are skipped entirely — no in-app notification, no webhook delivery.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
