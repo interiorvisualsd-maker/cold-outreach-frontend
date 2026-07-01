@@ -295,7 +295,16 @@ export function AccountsView() {
       load(true)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Save failed'
-      toast({ title: 'Failed to save account', description: msg, variant: 'destructive' })
+      // Check if it's a verification error (backend returns detailed message)
+      if (msg.includes('SMTP verification failed') || msg.includes('IMAP verification failed')) {
+        toast({
+          title: '⚠️ Account verification failed',
+          description: msg + ' — Please check your credentials and try again.',
+          variant: 'destructive',
+        })
+      } else {
+        toast({ title: 'Failed to save account', description: msg, variant: 'destructive' })
+      }
     } finally {
       setSaving(false)
     }
@@ -748,6 +757,7 @@ export function AccountsView() {
             </Button>
             <Button onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {saving ? 'Verifying...' : editingId ? 'Save Changes' : 'Create & Verify'}
               {editingId ? 'Save Changes' : 'Create Account'}
             </Button>
           </DialogFooter>
