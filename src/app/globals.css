@@ -7,7 +7,6 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -44,101 +43,64 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   INSTANTLY-STYLE LIGHT THEME
-   Clean white backgrounds, blue-violet primary, light gray sidebar.
+   LIGHT THEME — Clean white, violet primary, Instantly.ai style
    ───────────────────────────────────────────────────────────────── */
 :root {
   --radius: 0.5rem;
 
   /* Main backgrounds — pure white content area */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.18 0.02 270);
+  --background: #ffffff;
+  --foreground: #1e293b;
 
   /* Cards — white with subtle border */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 270);
+  --card: #ffffff;
+  --card-foreground: #1e293b;
 
   /* Popovers */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 270);
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
 
-  /* Primary — Instantly blue-violet (#5856D6 / indigo-600) */
-  --primary: oklch(0.52 0.22 277);
-  --primary-foreground: oklch(0.98 0.005 277);
+  /* Primary — Instantly blue-violet (#5856D6) */
+  --primary: #5856d6;
+  --primary-foreground: #ffffff;
 
   /* Secondary — light gray for buttons */
-  --secondary: oklch(0.96 0.005 270);
-  --secondary-foreground: oklch(0.25 0.02 270);
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
 
   /* Muted — light gray backgrounds */
-  --muted: oklch(0.965 0.003 270);
-  --muted-foreground: oklch(0.52 0.015 270);
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
 
   /* Accent — very light blue-violet tint */
-  --accent: oklch(0.95 0.02 277);
-  --accent-foreground: oklch(0.40 0.18 277);
+  --accent: #ede9fe;
+  --accent-foreground: #4c1d95;
 
   /* Destructive — red */
-  --destructive: oklch(0.58 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
 
   /* Borders — subtle gray */
-  --border: oklch(0.92 0.005 270);
-  --input: oklch(0.92 0.005 270);
-  --ring: oklch(0.52 0.22 277);
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #5856d6;
 
   /* Chart colors — professional palette */
-  --chart-1: oklch(0.52 0.22 277);  /* blue-violet */
-  --chart-2: oklch(0.65 0.18 162);  /* emerald */
-  --chart-3: oklch(0.70 0.15 70);   /* amber */
-  --chart-4: oklch(0.58 0.22 25);   /* red */
-  --chart-5: oklch(0.55 0.15 220);  /* sky */
+  --chart-1: #5856d6;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #dc2626;
+  --chart-5: #0ea5e9;
 
-  /* Sidebar — Instantly uses light gray (#F9FAFB) */
-  --sidebar: oklch(0.975 0.003 270);
-  --sidebar-foreground: oklch(0.30 0.015 270);
-  --sidebar-primary: oklch(0.52 0.22 277);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.93 0.02 277);
-  --sidebar-accent-foreground: oklch(0.40 0.18 277);
-  --sidebar-border: oklch(0.92 0.005 270);
-  --sidebar-ring: oklch(0.52 0.22 277);
-}
-
-/* No dark mode — Instantly is light-only */
-.dark {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.18 0.02 270);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 270);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 270);
-  --primary: oklch(0.52 0.22 277);
-  --primary-foreground: oklch(0.98 0.005 277);
-  --secondary: oklch(0.96 0.005 270);
-  --secondary-foreground: oklch(0.25 0.02 270);
-  --muted: oklch(0.965 0.003 270);
-  --muted-foreground: oklch(0.52 0.015 270);
-  --accent: oklch(0.95 0.02 277);
-  --accent-foreground: oklch(0.40 0.18 277);
-  --destructive: oklch(0.58 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.92 0.005 270);
-  --input: oklch(0.92 0.005 270);
-  --ring: oklch(0.52 0.22 277);
-  --chart-1: oklch(0.52 0.22 277);
-  --chart-2: oklch(0.65 0.18 162);
-  --chart-3: oklch(0.70 0.15 70);
-  --chart-4: oklch(0.58 0.22 25);
-  --chart-5: oklch(0.55 0.15 220);
-  --sidebar: oklch(0.975 0.003 270);
-  --sidebar-foreground: oklch(0.30 0.015 270);
-  --sidebar-primary: oklch(0.52 0.22 277);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.93 0.02 277);
-  --sidebar-accent-foreground: oklch(0.40 0.18 277);
-  --sidebar-border: oklch(0.92 0.005 270);
-  --sidebar-ring: oklch(0.52 0.22 277);
+  /* Sidebar — light gray (#F9FAFB) */
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #334155;
+  --sidebar-primary: #5856d6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ede9fe;
+  --sidebar-accent-foreground: #4c1d95;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #5856d6;
 }
 
 @layer base {
@@ -148,7 +110,6 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv11", "ss01";
-    font-variation-settings: "opsz" 32;
   }
   html {
     scroll-behavior: smooth;
@@ -157,76 +118,20 @@
 
 /* ── Instantly-style utility classes ──────────────────────────── */
 @layer utilities {
-  /* Card hover — subtle elevation */
   .card-hover {
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   }
   .card-hover:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -1px rgb(15 23 42 / 0.04);
-    border-color: oklch(0.88 0.01 277);
+    border-color: #c7d2fe;
   }
-
-  /* Glass panel — subtle frosted look for dropdowns */
-  .glass {
-    background: rgb(255 255 255 / 0.85);
-    backdrop-filter: blur(12px) saturate(140%);
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    border: 1px solid rgb(229 231 235 / 0.8);
-  }
-
-  /* Instantly-style metric card */
-  .metric-card {
-    background: oklch(1 0 0);
-    border: 1px solid oklch(0.92 0.005 270);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  .metric-card:hover {
-    border-color: oklch(0.85 0.02 277);
-    box-shadow: 0 2px 8px -2px rgb(88 86 214 / 0.08);
-  }
-
-  /* Instantly-style nav item */
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: oklch(0.45 0.015 270);
-    transition: background-color 0.15s ease, color 0.15s ease;
-    cursor: pointer;
-  }
-  .nav-item:hover {
-    background: oklch(0.95 0.01 270);
-    color: oklch(0.25 0.02 270);
-  }
-  .nav-item-active {
-    background: oklch(0.93 0.02 277);
-    color: oklch(0.40 0.18 277);
-    font-weight: 600;
-  }
-
-  /* Status badge styles */
-  .badge-success { background: oklch(0.92 0.05 162); color: oklch(0.35 0.12 162); }
-  .badge-warning { background: oklch(0.93 0.05 70); color: oklch(0.40 0.12 70); }
-  .badge-error { background: oklch(0.93 0.05 25); color: oklch(0.40 0.15 25); }
-  .badge-neutral { background: oklch(0.95 0.005 270); color: oklch(0.40 0.01 270); }
 }
 
 /* ── Keyframes ────────────────────────────────────────────────── */
-@keyframes ld-fade-up {
-  0%   { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes ld-pulse-soft {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.52 0.22 277 / 0.4); }
-  50%      { box-shadow: 0 0 0 6px oklch(0.52 0.22 277 / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(88 86 214 / 0.4); }
+  50%      { box-shadow: 0 0 0 6px rgb(88 86 214 / 0); }
 }
 
 .ld-pulse-soft { animation: ld-pulse-soft 2s ease-in-out infinite; }
@@ -234,22 +139,14 @@
 /* ── Custom scrollbar (thin, subtle) ──────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: oklch(0.85 0.005 270) transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
-  background: oklch(0.85 0.005 270);
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.72 0.01 270);
-}
-
-/* Legacy compat */
-.ld-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-.ld-scroll::-webkit-scrollbar-track { background: transparent; }
-.ld-scroll::-webkit-scrollbar-thumb {
-  background: oklch(0.85 0.005 270);
-  border-radius: 9999px;
+  background: #94a3b8;
 }
