@@ -265,7 +265,6 @@ export function DashboardView({ onNavigate }: { onNavigate?: (view: 'accounts' |
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [seeding, setSeeding] = useState(false)
 
   const load = useCallback(
     async (silent = false) => {
@@ -303,24 +302,7 @@ export function DashboardView({ onNavigate }: { onNavigate?: (view: 'accounts' |
     return () => clearInterval(t)
   }, [load])
 
-  const handleSeed = async () => {
-    setSeeding(true)
-    try {
-      const res = await api.post<{ ok: boolean; seeded: Record<string, number> }>(
-        '/api/extras/seed',
-      )
-      toast({
-        title: 'Demo data seeded',
-        description: `+${res.seeded?.accounts ?? 0} accounts · +${res.seeded?.campaigns ?? 0} campaigns · +${res.seeded?.leads ?? 0} leads`,
-      })
-      await load(true)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Seed failed'
-      toast({ title: 'Seed failed', description: msg, variant: 'destructive' })
-    } finally {
-      setSeeding(false)
-    }
-  }
+
 
   // ─── Derived values ────────────────────────────────────────────────
   const trend = analytics?.trend ?? []
@@ -451,17 +433,6 @@ export function DashboardView({ onNavigate }: { onNavigate?: (view: 'accounts' |
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSeed}
-            disabled={seeding}
-            className={total7d === 0 && totals.totalSent === 0 ? 'ld-pulse-soft border-amber-300 text-amber-700 hover:bg-amber-50' : ''}
-            title={total7d === 0 && totals.totalSent === 0 ? 'No data yet — click to seed demo data' : 'Reseed demo data'}
-          >
-            {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Seed Demo Data
-          </Button>
           <Button variant="outline" size="sm" onClick={() => load(true)} disabled={refreshing}>
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
