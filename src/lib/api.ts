@@ -1,6 +1,6 @@
-// API client — talks to backend.
-// In sandbox: backend runs in-process via Next.js catch-all API route (same origin)
-// In production: NEXT_PUBLIC_API_URL is set to the Cloud Run backend URL
+// API client — talks to the backend.
+// In production: NEXT_PUBLIC_API_URL is set to the Render backend URL
+// In sandbox: falls back to same-origin (in-process backend)
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
 
@@ -8,7 +8,7 @@ function buildUrl(path: string): string {
   if (API_BASE) {
     return `${API_BASE}${path}`
   }
-  // Same origin — Next.js API route delegates to Hono backend
+  // Fallback: same origin (sandbox mode)
   return path
 }
 
