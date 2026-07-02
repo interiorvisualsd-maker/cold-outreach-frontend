@@ -312,7 +312,7 @@ export function CampaignsView() {
     name: '',
     sendingWindowStart: '9',
     sendingWindowEnd: '17',
-    timezone: 'UTC',
+    timezone: 'America/New_York',
     fromNameOverride: '',
   })
   const [creating, setCreating] = useState(false)
@@ -463,7 +463,7 @@ export function CampaignsView() {
       })
       toast({ title: 'Campaign created', description: createForm.name })
       setCreateOpen(false)
-      setCreateForm({ name: '', sendingWindowStart: '9', sendingWindowEnd: '17', timezone: 'UTC', fromNameOverride: '' })
+      setCreateForm({ name: '', sendingWindowStart: '9', sendingWindowEnd: '17', timezone: 'America/New_York', fromNameOverride: '' })
       loadList(true)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Create failed'
@@ -1700,13 +1700,50 @@ export function CampaignsView() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="camp-tz">Timezone</Label>
-                <Input
-                  id="camp-tz"
+                <Label htmlFor="camp-tz">Timezone (prospect's local time)</Label>
+                <Select
                   value={createForm.timezone}
-                  onChange={(e) => setCreateForm({ ...createForm, timezone: e.target.value })}
-                  placeholder="UTC"
-                />
+                  onValueChange={(v) => setCreateForm({ ...createForm, timezone: v })}
+                >
+                  <SelectTrigger id="camp-tz">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    <SelectItem value="America/New_York">US Eastern (New York)</SelectItem>
+                    <SelectItem value="America/Chicago">US Central (Chicago)</SelectItem>
+                    <SelectItem value="America/Denver">US Mountain (Denver)</SelectItem>
+                    <SelectItem value="America/Los_Angeles">US Pacific (Los Angeles)</SelectItem>
+                    <SelectItem value="America/Anchorage">US Alaska</SelectItem>
+                    <SelectItem value="America/Toronto">Canada Eastern (Toronto)</SelectItem>
+                    <SelectItem value="America/Vancouver">Canada Pacific (Vancouver)</SelectItem>
+                    <SelectItem value="Europe/London">UK (London)</SelectItem>
+                    <SelectItem value="Europe/Paris">Central Europe (Paris)</SelectItem>
+                    <SelectItem value="Europe/Berlin">Germany (Berlin)</SelectItem>
+                    <SelectItem value="Europe/Madrid">Spain (Madrid)</SelectItem>
+                    <SelectItem value="Europe/Amsterdam">Netherlands (Amsterdam)</SelectItem>
+                    <SelectItem value="Europe/Dublin">Ireland (Dublin)</SelectItem>
+                    <SelectItem value="Australia/Sydney">Australia (Sydney)</SelectItem>
+                    <SelectItem value="Australia/Melbourne">Australia (Melbourne)</SelectItem>
+                    <SelectItem value="Asia/Singapore">Singapore</SelectItem>
+                    <SelectItem value="Asia/Dubai">UAE (Dubai)</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Japan (Tokyo)</SelectItem>
+                    <SelectItem value="Asia/Hong_Kong">Hong Kong</SelectItem>
+                    <SelectItem value="Africa/Lagos">Nigeria (Lagos)</SelectItem>
+                    <SelectItem value="Africa/Johannesburg">South Africa</SelectItem>
+                    <SelectItem value="Africa/Cairo">Egypt (Cairo)</SelectItem>
+                    <SelectItem value="America/Sao_Paulo">Brazil (São Paulo)</SelectItem>
+                    <SelectItem value="America/Mexico_City">Mexico</SelectItem>
+                    <SelectItem value="America/Buenos_Aires">Argentina</SelectItem>
+                    <SelectItem value="America/Bogota">Colombia</SelectItem>
+                    <SelectItem value="America/Santiago">Chile</SelectItem>
+                    <SelectItem value="Asia/Kolkata">India</SelectItem>
+                    <SelectItem value="Asia/Bangkok">Thailand</SelectItem>
+                    <SelectItem value="Asia/Manila">Philippines</SelectItem>
+                    <SelectItem value="Asia/Jakarta">Indonesia</SelectItem>
+                    <SelectItem value="Pacific/Auckland">New Zealand</SelectItem>
+                    <SelectItem value="UTC">UTC</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="camp-from">From Name Override (optional)</Label>
