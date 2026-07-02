@@ -345,6 +345,8 @@ export function CampaignsView() {
   // Lead detail dialog state
   const [leadDetailId, setLeadDetailId] = useState<string | null>(null)
   const [leadDetailOpen, setLeadDetailOpen] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [validationResults, setValidationResults] = useState<{ valid: number; suppressed: number; total: number } | null>(null)
 
   const loadList = useCallback(
     async (silent = false) => {
@@ -383,6 +385,28 @@ export function CampaignsView() {
     },
     [toast],
   )
+
+  const validateLeads = async () => {
+    if (!detail) return
+    setValidating(true)
+    setValidationResults(null)
+    try {
+      const res = await api.post<{ ok: boolean; validated: number; valid: number; suppressed: number; suppressedLeads: any[] }>(
+        `/api/extras/campaigns/${detail.id}/validate-leads`
+      )
+      setValidationResults({ valid: res.valid, suppressed: res.suppressed, total: res.validated })
+      toast({
+        title: 'Validation complete',
+        description: `${res.valid} valid · ${res.suppressed} bad emails removed`,
+      })
+      loadLeads(leadsPage, leadsStatus)
+      loadAnalytics(detail.id)
+    } catch (e: any) {
+      toast({ title: 'Validation failed', description: e?.message, variant: 'destructive' })
+    } finally {
+      setValidating(false)
+    }
+  }
 
   const loadLeads = useCallback(
     async (id: string, page: number, status: string) => {
@@ -705,6 +729,10 @@ export function CampaignsView() {
             <Button size="sm" variant="outline" onClick={exportQueue} disabled={exportingQueue || detailLoading}>
               {exportingQueue ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Export Queue
+            </Button>
+            <Button size="sm" variant="outline" onClick={validateLeads} disabled={validating || detailLoading} className="border-amber-300 text-amber-700 hover:bg-amber-50">
+              {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Validate Emails
             </Button>
             {detail?.status === 'draft' && (
               <Button size="sm" onClick={() => startCampaign(detail.id)} disabled={actioningId === detail.id}>
