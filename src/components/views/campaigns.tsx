@@ -94,6 +94,7 @@ import {
   Filter,
   Copy,
   Check,
+  ShieldCheck,
 } from 'lucide-react'
 import { statusBadgeClass, EmptyState } from './dashboard'
 

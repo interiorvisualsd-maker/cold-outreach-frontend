@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   title: "Lead Dispatcher — Cold Email Automation",
   description: "Private cold email automation with inbox rotation, warm-up engine, and unified inbox.",
   icons: {
-    icon: "/logo.svg",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
@@ -24,6 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+    <head>
+      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      <link rel="apple-touch-icon" href="/favicon.svg" />
+    </head>
       <body
         className={`${inter.variable} antialiased bg-background text-foreground`}
         style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
